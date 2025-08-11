@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAdminsArchived, restoreAdmin } from "../controllers/adminArchivedController";
+import { getAdminsArchived, restoreAdmin } from "../controller/adminArchivedController";
 
 const router = Router();
 
