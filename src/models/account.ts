@@ -1,6 +1,7 @@
-import { Schema, model, InferSchemaType } from "mongoose";
+import { Schema, model } from "mongoose";
+import type { AccountType } from "../validators/account";
 
-const accountSchema = new Schema(
+const accountSchema = new Schema<AccountType>(
   {
     firstName: { type: String, required: true },
     middleName: { type: String },
@@ -18,13 +19,9 @@ const accountSchema = new Schema(
       default: "inactive",
     },
     isVerified: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-type AccountType = InferSchemaType<typeof accountSchema>;
-
-const Account = model<AccountType>("Account", accountSchema);
-
-export type { AccountType };
-export { Account };
+export const Account = model<AccountType>("Account", accountSchema);

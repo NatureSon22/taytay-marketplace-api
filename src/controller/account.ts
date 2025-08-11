@@ -1,36 +1,118 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
+import AppError from "../utils/appError";
+import { Account } from "../models/account";
+import {
+  AccountIdParamType,
+  AccountType,
+  UpdateAccountType,
+} from "../validators/account";
 
-const accountSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  middleName: z.string().optional(),
-  lastName: z.string().min(1, "Last name is required"),
-  birthday: z.coerce.date("Birthday is required"),
-  age: z.string().min(1, "Age is required"),
-  contactNumber: z.string().min(1, "Contact number is required"),
-  address: z.string().min(1, "Address is required"),
-  username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-  status: z.enum(["active", "inactive", "blocked"]).default("inactive"),
-  isVerified: z.boolean().default(false),
-});
-
-const createAccount = async (
+export const getAccounts = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const result = accountSchema.safeParse(req.body);
+    const accounts = await Account.find();
 
-    if (!result.success) {
-      const errorMessages = result.error.issues.map((issue) => issue.message);
-      return next();
-    }
+    res
+      .status(201)
+      .json({ message: "Accounts retrieved successfully", data: accounts });
   } catch (error) {
     next(error);
   }
 };
 
-export { createAccount };
+export const getAccount = async (
+  req: Request<AccountIdParamType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const account = await Account.findById(id);
+
+    if (!account) {
+      return next(new AppError("Account not found", 404));
+    }
+
+    res
+      .status(200)
+      .json({ message: "Account retrieved successfully", data: account });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createAccount = async (
+  req: Request<unknown, unknown, AccountType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const data = req.body;
+
+    const newAccount = await Account.create(data);
+
+    if (!newAccount) {
+      return next(new AppError("Failed to create account", 500));
+    }
+
+    res
+      .status(201)
+      .json({ message: "Account created successfully", data: newAccount });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAccount = async (
+  req: Request<AccountIdParamType, unknown, UpdateAccountType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    const updatedAccount = await Account.findOneAndUpdate({ _id: id }, data, {
+      new: true,
+    });
+
+    if (!updatedAccount) {
+      return next(new AppError("Account not found", 404));
+    }
+
+    res
+      .status(200)
+      .json({ message: "Account updated successfully", data: updatedAccount });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteAccount = async (
+  req: Request<AccountIdParamType, unknown, unknown>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    const deletedAccount = await Account.findOneAndUpdate(
+      { _id: id },
+      { isDeleted: true },
+      { new: true }
+    );
+
+    if (!deletedAccount) {
+      return next(new AppError("Account not found", 404));
+    }
+
+    res
+      .status(200)
+      .json({ message: "Account deleted successfully", data: deletedAccount });
+  } catch (error) {
+    next(error);
+  }
+};
