@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import AppError from "./appError";
+import AppError from "../utils/appError";
 import jwt from "jsonwebtoken";
 
 interface AuthenticatedRequest extends Request {
