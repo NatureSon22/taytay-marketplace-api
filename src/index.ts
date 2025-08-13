@@ -4,6 +4,7 @@ import cors from "cors";
 import errorHandler from "./utils/errorHandler";
 import adminRoutes from "./routes/adminRoutes";
 import adminArchivedRoutes from "./routes/adminArchivedRoutes";
+import authRouter from "./routes/auth";
 import categoryRoutes from "./routes/categoryRoutes";
 import categoryArchivedRoutes from "./routes/categoryArchivedRoutes";
 import productTypeRoutes from "./routes/productTypeRoutes";
@@ -18,6 +19,7 @@ app.use(json());
 app.use(cors());
 
 // routes
+app.use("/api/auth", authRouter);
 app.use("/api/admins", adminRoutes);
 app.use("/api/archive-admins", adminArchivedRoutes);
 app.use("/api/categories", categoryRoutes);
