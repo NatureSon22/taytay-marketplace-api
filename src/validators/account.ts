@@ -1,18 +1,22 @@
+import { Types } from "mongoose";
 import { z } from "zod";
 
 export const accountSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
+  _id: z.instanceof(Types.ObjectId, {
+    message: "Invalid ObjectId",
+  }),
+  firstName: z.string().min(1, { error: "First name is required" }),
   middleName: z.string().optional(),
-  lastName: z.string().min(1, "Last name is required"),
-  birthday: z.coerce.date({ message: "Birthday is required" }),
-  age: z.string().min(1, "Age is required"),
-  contactNumber: z.string().min(1, "Contact number is required"),
-  address: z.string().min(1, "Address is required"),
-  username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  lastName: z.string().min(1, { error: "Last name is required" }),
+  birthday: z.coerce.date({ error: "Birthday is required" }),
+  age: z.string().min(1, { error: "Age is required" }),
+  contactNumber: z.string().min(1, { error: "Contact number is required" }),
+  address: z.string().optional(),
+  username: z.string().min(1, { error: "Username is required" }),
+  email: z.string().email({ error: "Invalid email address" }),
+  password: z.string().min(1, { error: "Password is required" }),
   status: z
-    .enum(["active", "inactive", "blocked"], { message: "Invalid status" })
+    .enum(["active", "inactive", "blocked"], { error: "Invalid status" })
     .default("inactive"),
   isVerified: z.boolean().default(false),
   isDeleted: z.boolean().default(false),

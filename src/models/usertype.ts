@@ -1,15 +1,17 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { Schema, model } from "mongoose";
+import { z } from "zod";
 
-const userTypeSchema = new Schema(
+export const userTypeZodSchema = z.object({
+  type: z.string().min(1, "User type is required"),
+});
+
+export type UserTypeType = z.infer<typeof userTypeZodSchema>;
+
+const userTypeSchema = new Schema<UserTypeType>(
   {
     type: { type: String, required: true },
   },
   { timestamps: true }
 );
 
-type UserTypeType = InferSchemaType<typeof userTypeSchema>;
-
-const UserType = model<UserTypeType>("UserType", userTypeSchema);
-
-export type { UserTypeType };
-export { UserType };
+export const UserType = model<UserTypeType>("UserType", userTypeSchema);

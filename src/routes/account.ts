@@ -1,11 +1,14 @@
-import {
-  updateAccountSchema,
-  UpdateAccountType,
-} from "./../validators/account";
+import { updateAccountSchema } from "./../validators/account";
 import { Router } from "express";
 import { validateBody, validateParams } from "../middleware/validate";
 import { accountIdSchema, accountSchema } from "../validators/account";
-import { createAccount, getAccount, getAccounts } from "../controller/account";
+import {
+  createAccount,
+  deleteAccount,
+  getAccount,
+  getAccounts,
+  updateAccount,
+} from "../controller/account";
 import verifyToken from "../middleware/verifyToken";
 
 const accountRouter = Router();
@@ -25,7 +28,16 @@ accountRouter.post(
 );
 accountRouter.put(
   "/:id",
+  verifyToken,
   validateParams(accountIdSchema),
-  validateBody(updateAccountSchema)
+  validateBody(updateAccountSchema),
+  updateAccount
 );
-accountRouter.delete("/:id", validateParams(accountIdSchema));
+accountRouter.delete(
+  "/:id",
+  verifyToken,
+  validateParams(accountIdSchema),
+  deleteAccount
+);
+
+export default accountRouter;

@@ -3,7 +3,18 @@ import { z } from "zod";
 import AppError from "../utils/appError";
 import { Account } from "../models/account";
 import jwt from "jsonwebtoken";
-import { verifyPassword } from "../utils/password";
+import { hashPassword, verifyPassword } from "../utils/password";
+import { AccountType } from "../validators/account";
+import { StoreType } from "../validators/store";
+import { Store } from "../models/store";
+
+type JwtPayload = {
+  accountId: string;
+};
+
+interface AuthenticatedRequest extends Request {
+  account: JwtPayload;
+}
 
 const loginSchema = z.object({
   email: z.email("Invalid email address"),
@@ -95,4 +106,66 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { login, logout };
+const register = async (
+  req: Request<unknown, unknown, AccountType & StoreType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const data = req.body;
+
+    const existing = await Account.findOne({ email: data.email });
+
+    if (existing) {
+      return next(new AppError("Email already registered", 409));
+    }
+
+    const hashedPassword = await hashPassword(data.password);
+    const account = await Account.create({ ...data, password: hashedPassword });
+
+    if (!account) {
+      return next(new AppError("Failed to create account", 500));
+    }
+
+    const store = await Store.create({ ...data, owner: account._id });
+
+    if (!store) {
+      return next(new AppError("Failed to create account", 500));
+    }
+
+    const authToken = jwt.sign(
+      { accountId: account._id },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1d" }
+    );
+
+    res.cookie("authToken", authToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "Account created successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLoggedInUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { accountId } = (req as AuthenticatedRequest).account;
+
+    const account = await Account.findById({ _id: accountId });
+
+    res.status(200).json({ message: "Logged in", data: account });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { login, logout, register, getLoggedInUser };
