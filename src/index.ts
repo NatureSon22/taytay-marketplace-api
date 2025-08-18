@@ -11,6 +11,10 @@ import categoryArchivedRoutes from "./routes/categoryArchivedRoutes";
 import productTypeRoutes from "./routes/productTypeRoutes";
 import productTypeArchivedRoutes from "./routes/productTypeArchivedRoutes";
 import accountRouter from "./routes/account";
+import linkRoutes from "./routes/linkRoutes";
+import linkArchivedRoutes from "./routes/linkArchivedRoutes";
+import generalInformationRoutes from "./routes/generalInformationRoutes";
+import actLogRoutes from "./routes/actLogRoutes";
 
 const app = express();
 
@@ -34,6 +38,10 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/archive-categories", categoryArchivedRoutes);
 app.use("/api/product-types", productTypeRoutes);
 app.use("/api/archive-product-types", productTypeArchivedRoutes);
+app.use("/api/links", linkRoutes);
+app.use("/api/archived-links", linkArchivedRoutes);
+app.use("/api/general-information", generalInformationRoutes);
+app.use("/api/logs", actLogRoutes);
 
 app.use(errorHandler);
 
