@@ -17,8 +17,10 @@ interface AuthenticatedRequest extends Request {
 }
 
 const loginSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.email({ message: "Invalid email" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be 8 characters long" }),
 });
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
@@ -86,7 +88,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login Successful" });
+    
+
+    res.status(200).json({ message: "Login Successful", data: user });
   } catch (error) {
     next(error);
   }

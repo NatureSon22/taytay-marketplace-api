@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import AppError from "../utils/appError";
-import { ZodObject } from "zod";
+import { ZodObject, ZodRawShape } from "zod";
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -89,6 +89,6 @@ export const validateQuery =
       return next(new AppError(errorMessages, 422));
     }
 
-    req.query = result.data as unknown as typeof req.query;
+    (req as any).query = result.data;
     next();
   };

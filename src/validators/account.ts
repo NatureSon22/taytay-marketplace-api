@@ -13,7 +13,7 @@ export const accountSchema = z.object({
   contactNumber: z.string().min(1, { error: "Contact number is required" }),
   address: z.string().optional(),
   username: z.string().min(1, { error: "Username is required" }),
-  email: z.string().email({ error: "Invalid email address" }),
+  email: z.email({ error: "Invalid email address" }),
   password: z.string().min(1, { error: "Password is required" }),
   status: z
     .enum(["active", "inactive", "blocked"], { error: "Invalid status" })

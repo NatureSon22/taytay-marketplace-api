@@ -11,13 +11,14 @@ import AppError from "../utils/appError";
 const DATA_PER_PAGE = 20;
 
 export const getStores = async (
-  req: Request<unknown, unknown, unknown, StorePaginationType>,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const page = Number(req.query.page ?? 1);
-    const limit = Number(req.query.limit ?? DATA_PER_PAGE);
+    const { limit = 1, page = DATA_PER_PAGE } =
+      req.query as unknown as StorePaginationType;
+
     const offset = (page - 1) * limit;
 
     const [stores, total] = await Promise.all([
