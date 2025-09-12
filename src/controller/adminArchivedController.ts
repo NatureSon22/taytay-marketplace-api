@@ -26,6 +26,7 @@ export const restoreAdmin = async (req: Request, res: Response) => {
       firstName: archivedAdmin.firstName,
       middleName: archivedAdmin.middleName,
       lastName: archivedAdmin.lastName,
+      password: archivedAdmin.password,
       status: archivedAdmin.status,
       role: archivedAdmin.role,
     });

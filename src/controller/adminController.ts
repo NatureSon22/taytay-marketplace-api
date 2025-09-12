@@ -21,9 +21,16 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const existingAdmin = await Admin.findOne({ id });
-    if (existingAdmin) {
+    // ✅ Check if ID already exists
+    const existingAdminById = await Admin.findOne({ id });
+    if (existingAdminById) {
       return res.status(409).json({ message: "Admin with this ID already exists" });
+    }
+
+    // ✅ Check if Email already exists
+    const existingAdminByEmail = await Admin.findOne({ email });
+    if (existingAdminByEmail) {
+      return res.status(409).json({ message: "Admin with this Email already exists" });
     }
 
     // Generate password
@@ -35,14 +42,14 @@ export const createAdmin = async (req: Request, res: Response) => {
       firstName,
       middleName,
       lastName,
-      password: generatedPassword, // later we’ll hash
+      password: generatedPassword, // ⚠️ later hash this
       status: "Active",
       role,
     });
 
     await newAdmin.save();
 
-    // Send email
+    // Send styled email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -52,21 +59,42 @@ export const createAdmin = async (req: Request, res: Response) => {
     });
 
     await transporter.sendMail({
-      from: `"System Admin" <${process.env.SMTP_EMAIL}>`,
+      from: `"Taytay Marketplace" <${process.env.SMTP_EMAIL}>`,
       to: email,
-      subject: "Your Admin Account Credentials",
-      text: `Hello ${firstName},\n\nYour admin account has been created.\n\nLogin credentials:\nID: ${id}\nPassword: ${generatedPassword}\n\nPlease change your password after logging in.`,
+      subject: "Welcome to Taytay Marketplace 🎉",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
+          <div style="max-width: 600px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="background: #4CAF50; padding: 20px; text-align: center; color: white;">
+              <h1>Welcome, ${firstName}!</h1>
+            </div>
+            <div style="padding: 20px; color: #333;">
+              <p>Hi <strong>${firstName} ${lastName}</strong>,</p>
+              <p>Your admin account has been created successfully 🎉</p>
+              <p><b>Email:</b> ${email}</p>
+              <p><b>Password:</b> ${generatedPassword}</p>
+              <p style="margin-top: 20px;">
+                You can now log in and start managing the platform.
+              </p>
+            </div>
+            <div style="background: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #555;">
+              © 2025 Taytay Marketplace. All rights reserved.
+            </div>
+          </div>
+        </div>
+      `,
     });
 
     res.status(201).json({ message: "Admin created and email sent", admin: newAdmin });
   } catch (error: any) {
-  console.error("❌ Error creating admin:", error); // full error in backend console
-  res.status(500).json({
-    message: "Failed to create admin",
-    error: error.message || error.toString(),
-  });
-}
+    console.error("❌ Error creating admin:", error);
+    res.status(500).json({
+      message: "Failed to create admin",
+      error: error.message || error.toString(),
+    });
+  }
 };
+
 
 export const archiveAdmin = async (req: Request, res: Response) => {
   try {
