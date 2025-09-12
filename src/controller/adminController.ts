@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Admin from "../models/admin";
 import AdminArchived from "../models/adminArchived";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 export const getAdmins = async (req: Request, res: Response) => {
   try {
@@ -24,22 +26,46 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "Admin with this ID already exists" });
     }
 
+    // Generate password
+    const generatedPassword = crypto.randomBytes(6).toString("hex");
+
     const newAdmin = new Admin({
       id,
       email,
       firstName,
       middleName,
       lastName,
+      password: generatedPassword, // later we’ll hash
       status: "Active",
-      role, 
+      role,
     });
 
     await newAdmin.save();
 
-    res.status(201).json({ message: "Admin created successfully", admin: newAdmin });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to create admin", error });
-  }
+    // Send email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"System Admin" <${process.env.SMTP_EMAIL}>`,
+      to: email,
+      subject: "Your Admin Account Credentials",
+      text: `Hello ${firstName},\n\nYour admin account has been created.\n\nLogin credentials:\nID: ${id}\nPassword: ${generatedPassword}\n\nPlease change your password after logging in.`,
+    });
+
+    res.status(201).json({ message: "Admin created and email sent", admin: newAdmin });
+  } catch (error: any) {
+  console.error("❌ Error creating admin:", error); // full error in backend console
+  res.status(500).json({
+    message: "Failed to create admin",
+    error: error.message || error.toString(),
+  });
+}
 };
 
 export const archiveAdmin = async (req: Request, res: Response) => {
@@ -57,6 +83,7 @@ export const archiveAdmin = async (req: Request, res: Response) => {
       firstName: admin.firstName,
       middleName: admin.middleName,
       lastName: admin.lastName,
+      password: admin.password,
       status: admin.status,
       role: admin.role,
     });
