@@ -13,6 +13,7 @@ import {
   productSchema,
   updateProductSchema,
 } from "../validators/product";
+import upload from "../middleware/upload";
 
 const productRouter = Router();
 
@@ -26,7 +27,8 @@ productRouter.get(
 productRouter.post(
   "/",
   verifyToken,
-  validateBody(productSchema),
+  upload.array("images[]", 4),
+  validateBody(productSchema, true, "productPictures"),
   createProduct
 );
 productRouter.put(

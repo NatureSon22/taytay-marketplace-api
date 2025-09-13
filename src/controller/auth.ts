@@ -88,9 +88,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    
+    const store = await Store.find({ owner: user._id });
 
-    res.status(200).json({ message: "Login Successful", data: user });
+    const publicUser = { ...user, password: "*".repeat(user.password.length) };
+
+    res
+      .status(200)
+      .json({ message: "Login Successful", data: { publicUser, store } });
   } catch (error) {
     next(error);
   }
@@ -164,9 +168,20 @@ const getLoggedInUser = async (
   try {
     const { accountId } = (req as AuthenticatedRequest).account;
 
-    const account = await Account.findById({ _id: accountId });
+    const account = await Account.findById({ _id: accountId }).lean();
 
-    res.status(200).json({ message: "Logged in", data: account });
+    if (!account) {
+      return next(new AppError("Account not found", 404));
+    }
+
+    const store = await Store.findOne({ owner: account._id });
+
+    const publicUser = {
+      ...account,
+      password: "*".repeat(account.password.length),
+    };
+
+    res.status(200).json({ message: "Logged in", data: { publicUser, store } });
   } catch (error) {
     next(error);
   }
