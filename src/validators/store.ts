@@ -6,26 +6,6 @@ const objectIdSchema = z.instanceof(Types.ObjectId, {
   message: "Invalid ObjectId",
 });
 
-// export const storeSchema = z.object({
-//   profilePicture: z.string().optional(),
-//   description: z.string().optional(),
-//   storeName: z.string().min(1, "Store name is required"),
-//   joinedDate: z.string().optional(),
-//   contactNo: z
-//     .string()
-//     .regex(phoneRe, { message: "Valid phone number is required" }),
-//   email: z.email({ message: "Email must be valid" }),
-//   stallNumbers: z
-//     .array(z.string())
-//     .min(1, {error: ""  }),
-//   owner: objectIdSchema.optional(),
-//   // permit: z.string().min(1, "Permit is required"),
-//   permit: z.string().optional(),
-//   linkedAccount: z.array(objectIdSchema).optional(),
-//   paymentMethod: z.array(objectIdSchema).optional(),
-//   isDeleted: z.boolean().default(false),
-// });
-
 export const storeSchema = z.object({
   profilePicture: z.string().optional(),
   description: z.string().optional(),
@@ -37,7 +17,7 @@ export const storeSchema = z.object({
   email: z.email({ error: "Email must be valid" }),
   stallNumbers: z
     .array(z.string())
-    .min(1, { error: "Stall numbers are required" }), // Corrected
+    .min(1, { error: "Stall numbers are required" }),
   owner: objectIdSchema.optional(),
   permit: z.string().optional(),
   linkedAccount: z.array(objectIdSchema).optional(),

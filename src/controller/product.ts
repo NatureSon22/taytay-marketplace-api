@@ -1,8 +1,15 @@
-import { productSchema, ProductType } from "./../validators/product";
+import { ProductType } from "./../validators/product";
 import { NextFunction, Request, Response } from "express";
 import { Product } from "../models/product";
 import { ProductIdParamType, UpdateProductType } from "../validators/product";
 import AppError from "../utils/appError";
+
+type MulterRequest = Request & {
+  file?: Express.Multer.File;
+  files?:
+    | Express.Multer.File[]
+    | { [fieldname: string]: Express.Multer.File[] };
+};
 
 export const getProducts = async (
   req: Request,
@@ -54,9 +61,10 @@ export const createProduct = async (
       return next(new AppError("Failed to create product", 500));
     }
 
-    res
-      .status(200)
-      .json({ message: "Product created successfully", data: newProduct });
+    res.status(201).json({
+      message: "Product created successfully",
+      data: newProduct,
+    });
   } catch (error) {
     next(error);
   }

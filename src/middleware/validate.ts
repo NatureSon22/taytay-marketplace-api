@@ -2,6 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import AppError from "../utils/appError";
 import { ZodObject, ZodRawShape } from "zod";
 
+type MulterRequest = Request & {
+  file?: Express.Multer.File;
+  files?:
+    | Express.Multer.File[]
+    | { [fieldname: string]: Express.Multer.File[] };
+};
+
 function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
 }
@@ -47,20 +54,47 @@ export const validateAndMerge =
   };
 
 export const validateBody =
-  (schema: ZodObject) => (req: Request, res: Response, next: NextFunction) => {
-    // if a route will go through two of this, the prevData will be deleted which shouldnt be
-    const prevData = req.body;
-    const result = schema.safeParse(req.body);
+  (schema: ZodObject, withPictures = false, fieldForPicture = "") =>
+  (req: MulterRequest, res: Response, next: NextFunction) => {
+    try {
+      let data = { ...req.body };
 
-    if (!result.success) {
-      const errorMessages = result.error.issues
-        .map((issue) => issue.message)
-        .join(", ");
-      return next(new AppError(errorMessages, 422));
+      if (withPictures) {
+        let files: Express.Multer.File[] = [];
+
+        if (Array.isArray(req.files)) {
+          files = req.files;
+        } else if (req.file) {
+          files = [req.file];
+        }
+
+        if (!files.length) {
+          return next(new AppError("No images uploaded", 400));
+        }
+
+        const images = files.map((file) => file.path);
+        data = {
+          ...data,
+          [fieldForPicture]: images.length > 1 ? images : images[0],
+        };
+      }
+
+      console.log(data);
+      const result = schema.safeParse(data);
+
+      if (!result.success) {
+        const message = result.error.issues
+          .map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join(", ");
+          
+        return next(new AppError(message, 422));
+      }
+
+      req.body = result.data;
+      next();
+    } catch (err) {
+      next(err);
     }
-
-    req.body = { ...result.data, ...prevData };
-    next();
   };
 
 export const validateParams =

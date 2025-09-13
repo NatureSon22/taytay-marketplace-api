@@ -18,6 +18,7 @@ import {
   storeSchema,
   updatedStoreSchema,
 } from "../validators/store";
+import upload from "../middleware/upload";
 
 const storeRouter = Router();
 
@@ -36,9 +37,19 @@ storeRouter.put(
   validateBody(updatedStoreSchema),
   updateStore
 );
+storeRouter.put(
+  "/:id/profile-picture",
+  verifyToken,
+  validateParams(storeIdSchema),
+  upload.single("profilePicture"),
+  validateBody(updatedStoreSchema, true, "profilePicture"),
+  updateStore
+);
 storeRouter.delete(
   "/:id",
   verifyToken,
   validateParams(storeIdSchema),
   deleteStore
 );
+
+export default storeRouter;

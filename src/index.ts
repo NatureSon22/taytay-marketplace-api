@@ -15,6 +15,8 @@ import linkRoutes from "./routes/linkRoutes";
 import linkArchivedRoutes from "./routes/linkArchivedRoutes";
 import generalInformationRoutes from "./routes/generalInformationRoutes";
 import actLogRoutes from "./routes/actLogRoutes";
+import productRouter from "./routes/product";
+import storeRouter from "./routes/store";
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use(
 // routes
 app.use("/api/auth", authRouter);
 app.use("/api/accounts", accountRouter);
+app.use("/api/products", productRouter);
+app.use("/api/store", storeRouter);
 
 app.use("/api/admins", adminRoutes);
 app.use("/api/archive-admins", adminArchivedRoutes);

@@ -6,6 +6,7 @@ import {
   AccountType,
   UpdateAccountType,
 } from "../validators/account";
+import { hashPassword } from "../utils/password";
 
 export const getAccounts = async (
   req: Request,
@@ -75,17 +76,33 @@ export const updateAccount = async (
     const { id } = req.params;
     const data = req.body;
 
-    const updatedAccount = await Account.findOneAndUpdate({ _id: id }, data, {
-      new: true,
-    });
+    const payload = { ...data };
+
+    if (data.password) {
+      const hashedPassword = await hashPassword(data.password.trim());
+      payload.password = hashedPassword;
+    }
+
+    const updatedAccount = await Account.findOneAndUpdate(
+      { _id: id },
+      payload,
+      {
+        new: true,
+      }
+    ).lean();
 
     if (!updatedAccount) {
       return next(new AppError("Account not found", 404));
     }
 
+    const publicUser = {
+      ...updatedAccount,
+      password: "*".repeat(updatedAccount.password.length),
+    };
+
     res
       .status(200)
-      .json({ message: "Account updated successfully", data: updatedAccount });
+      .json({ message: "Account updated successfully", data: publicUser });
   } catch (error) {
     next(error);
   }

@@ -1,9 +1,10 @@
 import { Types } from "mongoose";
 import { z } from "zod";
 
-const objectIdSchema = z.instanceof(Types.ObjectId, {
-  message: "Invalid ObjectId",
-});
+const objectIdString = z
+  .string()
+  .refine((val) => Types.ObjectId.isValid(val), { message: "Invalid ObjectId" })
+  .transform((val) => new Types.ObjectId(val));
 
 export const productSchema = z.object({
   productName: z.string().min(1, { error: "Product name is required" }),
@@ -14,12 +15,12 @@ export const productSchema = z.object({
   productPictures: z
     .array(z.string())
     .min(1, { error: "At least one picture is required" }),
-  categories: z.array(objectIdSchema).optional(),
-  types: z.array(objectIdSchema).optional(),
+  categories: z.array(objectIdString).optional(),
+  types: z.array(objectIdString).optional(),
   links: z
     .array(
       z.object({
-        platform: objectIdSchema,
+        platform: objectIdString,
         url: z.url("Invalid url"),
       })
     )
