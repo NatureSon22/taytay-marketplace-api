@@ -5,13 +5,12 @@ import {
   archiveAdmin,
   updateAdminStatus,
 } from "../controller/adminController";
-import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
-router.get("/", verifyToken, getAdmins);
-router.post("/", verifyToken, createAdmin);
-router.delete("/:id/archive", verifyToken, archiveAdmin);
-router.put("/:id/status", verifyToken, updateAdminStatus);
+router.get("/", getAdmins);
+router.post("/", createAdmin);
+router.delete("/:id/archive", archiveAdmin);
+router.put("/:id/status", updateAdminStatus);
 
 export default router;

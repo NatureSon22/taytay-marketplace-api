@@ -1,53 +1,40 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { Account } from "../models/account";
-import Admin from "../models/admin";
 import AppError from "../utils/appError";
+import jwt from "jsonwebtoken";
 
 interface AuthenticatedRequest extends Request {
-  user?: any; 
+  account?: any;
 }
 
-export const verifyToken = async (
+type JwtPayload = {
+  accountId: string;
+};
+
+const verifyToken = (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
+  const token = req.cookies?.authToken;
+
+  if (!token) {
+    return next(new AppError("Unathoried", 401));
+  }
+
   try {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "") || req.cookies?.authToken;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as JwtPayload;
 
-    if (!token) {
-      return next(new AppError("Unauthorized: No token provided", 401));
-    }
-
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
-    let userData;
-
-    if (decoded.userType === "account") {
-      userData = await Account.findOne({ email: decoded.email });
-    } else if (decoded.userType === "admin") {
-      userData = await Admin.findOne({ email: decoded.email });
-    }
-
-    if (!userData) {
-      return next(new AppError("User not found", 404));
-    }
-
-    req.user = {
-      id: userData.id,
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: userData.role || "User",
-      userType: decoded.userType,
+    req.account = {
+      accountId: decoded.accountId,
     };
 
     next();
-  } catch (error: any) {
-    console.error("❌ Token verification error:", error);
-    return next(new AppError("Invalid or expired token", 401));
+  } catch (error) {
+    console.log(`Token verification error: ${error}`);
+    next(new AppError("Invalid or expired token", 401));
   }
 };
 
