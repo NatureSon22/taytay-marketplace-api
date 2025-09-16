@@ -174,14 +174,33 @@ const getLoggedInUser = async (
       return next(new AppError("Account not found", 404));
     }
 
-    const store = await Store.findOne({ owner: account._id });
+    const store = await Store.findOne({ owner: account._id })
+      .populate("linkedAccounts.platform")
+      .lean();
+
+    if (!store) {
+      return next(new AppError("Store not found", 404));
+    }
+
+    const transformed = {
+      ...store,
+      linkedAccounts: store?.linkedAccounts?.map((acc: any) => ({
+        logo: acc.platform?.link,
+        url: acc.url,
+        platform: acc.platform?._id.toString(),
+        platformName: acc.platform?.label,
+        isDeleted: acc.isDeleted ?? false,
+      })),
+    };
 
     const publicUser = {
       ...account,
       password: "*".repeat(account.password.length),
     };
 
-    res.status(200).json({ message: "Logged in", data: { publicUser, store } });
+    res
+      .status(200)
+      .json({ message: "Logged in", data: { publicUser, store: transformed } });
   } catch (error) {
     next(error);
   }

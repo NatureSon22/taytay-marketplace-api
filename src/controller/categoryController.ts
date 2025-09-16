@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Category from "../models/category";
 import CategoryArchived from "../models/categoryArchived";
+import { StoreIdParamType } from "../validators/store";
+import { Store } from "../models/store";
 
 export const getCategories = async (req: Request, res: Response) => {
   try {
@@ -11,27 +13,53 @@ export const getCategories = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllCategoriesForStore = async (
+  req: Request<StoreIdParamType>,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const store = await Store.findById(id).lean();
+    const mainCategories = await Category.find().lean();
+
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
+    const combinedCategories = [...(store.categories ?? []), ...mainCategories];
+
+    res.json(combinedCategories);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching categories", error });
+  }
+};
+
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { id, label} = req.body;
+    const { id, label } = req.body;
 
-    if (!id || !label ) {
+    if (!id || !label) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     const existingCategory = await Category.findOne({ id });
     if (existingCategory) {
-      return res.status(409).json({ message: "Category with this ID already exists" });
+      return res
+        .status(409)
+        .json({ message: "Category with this ID already exists" });
     }
 
     const newCategory = new Category({
       id,
-      label
+      label,
     });
 
     await newCategory.save();
 
-    res.status(201).json({ message: "Category created successfully", category: newCategory });
+    res.status(201).json({
+      message: "Category created successfully",
+      category: newCategory,
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to create Category", error });
   }
@@ -43,7 +71,9 @@ export const archiveCategory = async (req: Request, res: Response) => {
 
     const category = await Category.findOne({ id });
     if (!category) {
-      return res.status(404).json({ message: `Category with id ${id} not found` });
+      return res
+        .status(404)
+        .json({ message: `Category with id ${id} not found` });
     }
 
     const archivedCategory = new CategoryArchived({

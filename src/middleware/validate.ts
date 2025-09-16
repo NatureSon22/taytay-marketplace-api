@@ -79,14 +79,15 @@ export const validateBody =
         };
       }
 
-      console.log(data);
       const result = schema.safeParse(data);
 
       if (!result.success) {
         const message = result.error.issues
           .map((err) => `${err.path.join(".")}: ${err.message}`)
           .join(", ");
-          
+
+        console.log("message: " + message);
+
         return next(new AppError(message, 422));
       }
 

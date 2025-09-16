@@ -1,10 +1,12 @@
 import { Types } from "mongoose";
 import { z } from "zod";
+import category from "../models/category";
+import productType from "../models/productType";
 
 const phoneRe = /^(09|\+639)\d{9}$/;
-const objectIdSchema = z.instanceof(Types.ObjectId, {
-  message: "Invalid ObjectId",
-});
+export const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");
 
 export const storeSchema = z.object({
   profilePicture: z.string().optional(),
@@ -20,7 +22,29 @@ export const storeSchema = z.object({
     .min(1, { error: "Stall numbers are required" }),
   owner: objectIdSchema.optional(),
   permit: z.string().optional(),
-  linkedAccount: z.array(objectIdSchema).optional(),
+  categories: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+      })
+    )
+    .optional(),
+  productType: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+      })
+    )
+    .optional(),
+  linkedAccounts: z
+    .array(
+      z.object({
+        platform: objectIdSchema,
+        url: z.string().min(1, { error: "Link is required" }),
+        isDeleted: z.boolean().default(false),
+      })
+    )
+    .optional(),
   paymentMethod: z.array(objectIdSchema).optional(),
   isDeleted: z.boolean().default(false),
 });

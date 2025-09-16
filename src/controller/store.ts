@@ -89,17 +89,48 @@ export const updateStore = async (
     const { id } = req.params;
     const data = req.body;
 
-    const updatedStore = await Store.findOneAndUpdate({ _id: id }, data, {
-      new: true,
-    });
-
-    if (!updatedStore) {
+    const store = await Store.findById(id);
+    if (!store) {
       return next(new AppError("Store not found", 404));
     }
 
-    res
-      .status(200)
-      .json({ message: "Store updated successfully", data: updatedStore });
+    let mergedAccounts = store.linkedAccounts || [];
+
+    if (data.linkedAccounts && data.linkedAccounts.length > 0) {
+      data.linkedAccounts.forEach((incoming) => {
+        const idx = mergedAccounts.findIndex(
+          (current) =>
+            current.platform.toString() === incoming.platform.toString()
+        );
+
+        if (idx > -1) {
+          if (incoming.isDeleted) {
+            // remove account
+            mergedAccounts = mergedAccounts.filter((_, i) => i !== idx);
+          } else {
+            // update URL
+            mergedAccounts[idx].url = incoming.url;
+            mergedAccounts[idx].isDeleted = false;
+          }
+        } else {
+          // add new if not deleted
+          if (!incoming.isDeleted) {
+            mergedAccounts.push(incoming);
+          }
+        }
+      });
+    }
+
+    data.linkedAccounts = mergedAccounts;
+
+    const updatedStore = await Store.findByIdAndUpdate(id, data, {
+      new: true,
+    });
+
+    res.status(200).json({
+      message: "Store updated successfully",
+      data: updatedStore,
+    });
   } catch (error) {
     next(error);
   }

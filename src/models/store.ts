@@ -10,9 +10,23 @@ const storeSchema = new Schema<StoreType>({
   email: { type: String, required: true },
   stallNumbers: [{ type: String, required: true }],
   owner: { type: Schema.Types.ObjectId, ref: "Account", required: true },
-  // permit: { type: String, required: true },
   permit: { type: String },
-  linkedAccount: [{ type: Schema.Types.ObjectId, ref: "MarketPlatform" }],
+  linkedAccounts: [
+    {
+      platform: { type: Schema.Types.ObjectId, ref: "Link" },
+      url: { type: String, required: true },
+    },
+  ],
+  categories: [
+    {
+      label: { type: String, required: true },
+    },
+  ],
+  productType: [
+    {
+      label: { type: String, required: true },
+    },
+  ],
   paymentMethod: [{ type: Schema.Types.ObjectId, ref: "PaymentMethod" }],
   isDeleted: { type: Boolean, default: false },
 });
