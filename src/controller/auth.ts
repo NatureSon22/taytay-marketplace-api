@@ -88,13 +88,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    const store = await Store.find({ owner: user._id });
+    
 
-    const publicUser = { ...user, password: "*".repeat(user.password.length) };
-
-    res
-      .status(200)
-      .json({ message: "Login Successful", data: { publicUser, store } });
+    res.status(200).json({ message: "Login Successful", data: user });
   } catch (error) {
     next(error);
   }
@@ -168,7 +164,7 @@ const getLoggedInUser = async (
   try {
     const { accountId } = (req as AuthenticatedRequest).account;
 
-    const account = await Account.findById({ _id: accountId }).lean();
+    const account = await Account.findById({ _id: accountId });
 
     if (!account) {
       return next(new AppError("Account not found", 404));

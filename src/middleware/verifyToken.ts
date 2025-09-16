@@ -2,13 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/appError";
 import jwt from "jsonwebtoken";
 
+interface AuthenticatedRequest extends Request {
+  account?: any;
+}
+
 type JwtPayload = {
   accountId: string;
 };
-
-interface AuthenticatedRequest extends Request {
-  account?: JwtPayload;
-}
 
 const verifyToken = (
   req: AuthenticatedRequest,
@@ -30,8 +30,6 @@ const verifyToken = (
     req.account = {
       accountId: decoded.accountId,
     };
-
-    console.log(decoded.accountId);
 
     next();
   } catch (error) {

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Admin from "../models/admin";
 import AdminArchived from "../models/adminArchived";
 import nodemailer from "nodemailer";
+import { hashPassword } from "../utils/password";
 import crypto from "crypto";
 
 export const getAdmins = async (req: Request, res: Response) => {
@@ -21,20 +22,19 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Check if ID already exists
     const existingAdminById = await Admin.findOne({ id });
     if (existingAdminById) {
       return res.status(409).json({ message: "Admin with this ID already exists" });
     }
 
-    // ✅ Check if Email already exists
     const existingAdminByEmail = await Admin.findOne({ email });
     if (existingAdminByEmail) {
       return res.status(409).json({ message: "Admin with this Email already exists" });
     }
 
-    // Generate password
     const generatedPassword = crypto.randomBytes(6).toString("hex");
+
+    const hashedPassword = await hashPassword(generatedPassword);
 
     const newAdmin = new Admin({
       id,
@@ -42,14 +42,13 @@ export const createAdmin = async (req: Request, res: Response) => {
       firstName,
       middleName,
       lastName,
-      password: generatedPassword, // ⚠️ later hash this
+      password: hashedPassword, 
       status: "Active",
       role,
     });
 
     await newAdmin.save();
 
-    // Send styled email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -87,14 +86,13 @@ export const createAdmin = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: "Admin created and email sent", admin: newAdmin });
   } catch (error: any) {
-    console.error("❌ Error creating admin:", error);
+    console.error("Error creating admin:", error);
     res.status(500).json({
       message: "Failed to create admin",
       error: error.message || error.toString(),
     });
   }
 };
-
 
 export const archiveAdmin = async (req: Request, res: Response) => {
   try {
