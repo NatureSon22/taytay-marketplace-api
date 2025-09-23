@@ -12,10 +12,8 @@ import {
   updateSellerStatus,
 } from "../controller/account";
 import verifyToken from "../middleware/verifyToken";
-import multer from "multer";
 
 const accountRouter = Router();
-const upload = multer();
 
 accountRouter.get("/growth", verifyToken, getUserGrowth);
 accountRouter.get("/", verifyToken, getAccounts);

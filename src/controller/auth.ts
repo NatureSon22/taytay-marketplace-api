@@ -173,8 +173,39 @@ const getLoggedInUser = async (req: Request, res: Response, next: NextFunction) 
     } else {
       user = await Account.findById(accountId);
     }
+    const account = await Account.findById({ _id: accountId }).lean();
 
-    res.status(200).json({ message: "Logged in", data: user, type });
+    if (!account) {
+      return next(new AppError("Account not found", 404));
+    }
+
+    const store = await Store.findOne({ owner: account._id })
+      .populate("linkedAccounts.platform")
+      .lean();
+
+    if (!store) {
+      return next(new AppError("Store not found", 404));
+    }
+
+    const transformed = {
+      ...store,
+      linkedAccounts: store?.linkedAccounts?.map((acc: any) => ({
+        logo: acc.platform?.link,
+        url: acc.url,
+        platform: acc.platform?._id.toString(),
+        platformName: acc.platform?.label,
+        isDeleted: acc.isDeleted ?? false,
+      })),
+    };
+
+    const publicUser = {
+      ...account,
+      password: "*".repeat(account.password.length),
+    };
+
+    res
+      .status(200)
+      .json({ message: "Logged in", data: { user, type, publicUser, store: transformed } });
   } catch (error) {
     next(error);
   }

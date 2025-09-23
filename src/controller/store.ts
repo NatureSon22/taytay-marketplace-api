@@ -7,6 +7,7 @@ import {
 } from "../validators/store";
 import { Store } from "../models/store";
 import AppError from "../utils/appError";
+import { Product } from "../models/product";
 
 const DATA_PER_PAGE = 20;
 
@@ -59,6 +60,23 @@ export const getStore = async (
   }
 };
 
+export const getStoreProducts = async (
+  req: Request<StoreIdParamType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const products = await Product.find({ storeId: id });
+
+    res
+      .status(201)
+      .json({ message: "Store retrieved successfully", data: products });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createStore = async (
   req: Request<unknown, unknown, StoreType>,
   res: Response,
@@ -89,17 +107,60 @@ export const updateStore = async (
     const { id } = req.params;
     const data = req.body;
 
-    const updatedStore = await Store.findOneAndUpdate({ _id: id }, data, {
-      new: true,
-    });
-
-    if (!updatedStore) {
+    const store = await Store.findById(id);
+    if (!store) {
       return next(new AppError("Store not found", 404));
     }
 
-    res
-      .status(200)
-      .json({ message: "Store updated successfully", data: updatedStore });
+    let mergedAccounts = store.linkedAccounts || [];
+
+    if (data.linkedAccounts && data.linkedAccounts.length > 0) {
+      data.linkedAccounts.forEach((incoming) => {
+        const idx = mergedAccounts.findIndex(
+          (current) =>
+            current.platform.toString() === incoming.platform.toString()
+        );
+
+        if (idx > -1) {
+          if (incoming.isDeleted) {
+            // remove account
+            mergedAccounts = mergedAccounts.filter((_, i) => i !== idx);
+          } else {
+            // update URL
+            mergedAccounts[idx].url = incoming.url;
+            mergedAccounts[idx].isDeleted = false;
+          }
+        } else {
+          // add new if not deleted
+          if (!incoming.isDeleted) {
+            mergedAccounts.push(incoming);
+          }
+        }
+      });
+    }
+
+    data.linkedAccounts = mergedAccounts;
+
+    const updatedStore = await Store.findByIdAndUpdate(id, data, {
+      new: true,
+    })
+      .populate("linkedAccounts.platform")
+      .lean();
+
+    const transformedLinkedAccounts = updatedStore?.linkedAccounts?.map(
+      (acc: any) => ({
+        logo: acc.platform?.link,
+        url: acc.url,
+        platform: acc.platform?._id.toString(),
+        platformName: acc.platform?.label,
+        isDeleted: acc.isDeleted ?? false,
+      })
+    );
+
+    res.status(200).json({
+      message: "Store updated successfully",
+      data: { ...updatedStore, linkedAccounts: transformedLinkedAccounts },
+    });
   } catch (error) {
     next(error);
   }
