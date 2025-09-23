@@ -17,13 +17,15 @@ export const getStores = async (
   next: NextFunction
 ) => {
   try {
-    const { limit = 1, page = DATA_PER_PAGE } =
-      req.query as unknown as StorePaginationType;
+    const { limit, page } = req.query as unknown as StorePaginationType;
 
-    const offset = (page - 1) * limit;
+    const numericLimit = Number(limit) || DATA_PER_PAGE;
+    const numericPage = Number(page) || 1;
+
+    const offset = (numericPage - 1) * numericLimit;
 
     const [stores, total] = await Promise.all([
-      Store.find().skip(offset).limit(limit).exec(),
+      Store.find().skip(offset).limit(numericLimit).exec(),
       Store.countDocuments(),
     ]);
 
@@ -31,13 +33,15 @@ export const getStores = async (
       message: "Stores retrieved successfully",
       data: stores,
       total,
-      page,
-      limit,
+      page: numericPage,
+      limit: numericLimit,
+      totalPages: Math.ceil(total / numericLimit),
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const getStore = async (
   req: Request<StoreIdParamType>,

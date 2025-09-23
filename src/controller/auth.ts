@@ -88,7 +88,14 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login Successful", data: user });
+    const store = await Store.find({ owner: user._id });
+
+    const publicUser = { ...user, password: "*".repeat(user.password.length) };
+
+    res.status(200).json({
+      message: "Login Successful",
+      data: store ? { publicUser, store } : user,
+    });
   } catch (error) {
     next(error);
   }

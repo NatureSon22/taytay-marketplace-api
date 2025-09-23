@@ -26,7 +26,7 @@ const storeRouter = Router();
 storeRouter.get(
   "/",
   verifyToken,
-  validateQuery(storePaginationSchema),
+  // validateQuery(storePaginationSchema),
   getStores
 );
 storeRouter.get("/:id", verifyToken, validateParams(storeIdSchema), getStore);

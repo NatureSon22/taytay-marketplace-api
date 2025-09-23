@@ -34,7 +34,7 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/accounts", accountRouter);
 app.use("/api/products", productRouter);
-app.use("/api/store", storeRouter);
+app.use("/api/stores", storeRouter);
 
 app.use("/api/admins", adminRoutes);
 app.use("/api/archive-admins", adminArchivedRoutes);
