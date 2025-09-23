@@ -1,16 +1,24 @@
 import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/appError";
 import jwt from "jsonwebtoken";
+import Admin from "../models/admin";
+import { Account } from "../models/account";
 
 interface AuthenticatedRequest extends Request {
-  account?: any;
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName: string;
+    lastName: string;
+  };
 }
 
 type JwtPayload = {
   accountId: string;
+  type: "admin" | "account";
 };
 
-const verifyToken = (
+const verifyToken = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -18,7 +26,7 @@ const verifyToken = (
   const token = req.cookies?.authToken;
 
   if (!token) {
-    return next(new AppError("Unathoried", 401));
+    return next(new AppError("Unauthorized", 401));
   }
 
   try {
@@ -27,8 +35,23 @@ const verifyToken = (
       process.env.JWT_SECRET as string
     ) as JwtPayload;
 
+    let user: any;
+
+    if (decoded.type === "admin") {
+      user = await Admin.findById(decoded.accountId).select("firstName lastName");
+    } else {
+      user = await Account.findById(decoded.accountId).select("firstName lastName");
+    }
+
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
     req.account = {
       accountId: decoded.accountId,
+      type: decoded.type,
+      firstName: user.firstName,
+      lastName: user.lastName,
     };
 
     next();

@@ -7,12 +7,15 @@ import {
   deleteAccount,
   getAccount,
   getAccounts,
+  getUserGrowth,
   updateAccount,
+  updateSellerStatus,
 } from "../controller/account";
 import verifyToken from "../middleware/verifyToken";
 
 const accountRouter = Router();
 
+accountRouter.get("/growth", verifyToken, getUserGrowth);
 accountRouter.get("/", verifyToken, getAccounts);
 accountRouter.get(
   "/:id",
@@ -38,6 +41,12 @@ accountRouter.delete(
   verifyToken,
   validateParams(accountIdSchema),
   deleteAccount
+);
+accountRouter.patch(
+  "/:id/status",
+  verifyToken,
+  validateParams(accountIdSchema),
+  updateSellerStatus
 );
 
 export default accountRouter;

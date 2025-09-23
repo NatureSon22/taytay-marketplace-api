@@ -3,10 +3,11 @@ import {
   getGeneralInformation,
   upsertGeneralInformation
 } from "../controller/generalInformationController";
+import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
 router.get("/", getGeneralInformation);
-router.post("/", upsertGeneralInformation); 
+router.post("/", verifyToken, upsertGeneralInformation);
 
 export default router;

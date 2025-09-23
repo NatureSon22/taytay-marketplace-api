@@ -3,6 +3,16 @@ import ProductType from "../models/productType";
 import ProductTypeArchived from "../models/productTypeArchived";
 import { StoreIdParamType } from "../validators/store";
 import { Store } from "../models/store";
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName?: string;
+    lastName?: string;
+  };
+}
 
 export const getProductTypes = async (req: Request, res: Response) => {
   try {
@@ -37,7 +47,7 @@ export const getAllProductTypesForStore = async (
   }
 };
 
-export const createProductType = async (req: Request, res: Response) => {
+export const createProductType = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id, label } = req.body;
 
@@ -47,17 +57,25 @@ export const createProductType = async (req: Request, res: Response) => {
 
     const existingProductType = await ProductType.findOne({ id });
     if (existingProductType) {
+      return res.status(409).json({ message: "Product Type with this ID already exists" });
+    }
+
+
+    const existingLabel = await ProductType.findOne({ label });
+    if (existingLabel) {
       return res
         .status(409)
-        .json({ message: "Product Type with this ID already exists" });
+        .json({ message: "Product Type with this label already exists" });
     }
 
     const newProductType = new ProductType({
       id,
-      label,
+      label
     });
 
     await newProductType.save();
+
+    await logAction(req, `Created product type (${label})`);
 
     res.status(201).json({
       message: "Product Type created successfully",
@@ -74,9 +92,7 @@ export const archiveProductType = async (req: Request, res: Response) => {
 
     const product = await ProductType.findOne({ id });
     if (!product) {
-      return res
-        .status(404)
-        .json({ message: `Product Type with id ${id} not found` });
+      return res.status(404).json({ message: `Product Type with id ${id} not found` });
     }
 
     const archivedProductType = new ProductTypeArchived({

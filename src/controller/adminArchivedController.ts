@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import AdminArchived from "../models/adminArchived";
 import Admin from "../models/admin";  
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName: string;
+    lastName: string;
+  };
+}
 
 export const getAdminsArchived = async (req: Request, res: Response) => {
   try {
@@ -11,7 +21,7 @@ export const getAdminsArchived = async (req: Request, res: Response) => {
   }
 };
 
-export const restoreAdmin = async (req: Request, res: Response) => {
+export const restoreAdmin = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -33,6 +43,9 @@ export const restoreAdmin = async (req: Request, res: Response) => {
     await restoredAdmin.save();
 
     await AdminArchived.deleteOne({ id });
+
+    // 🔥 Log action
+    await logAction(req, `Restored admin (${archivedAdmin.firstName} ${archivedAdmin.lastName})`);
 
     res.status(200).json({ message: "Admin restored successfully", restoredAdmin });
   } catch (error) {

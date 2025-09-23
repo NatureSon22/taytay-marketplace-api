@@ -1,5 +1,15 @@
 import { Request, Response } from "express";
 import LinkArchived, { ILinkArchived } from "../models/linkArchived";
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName?: string;
+    lastName?: string;
+  };
+}
 
 export const getArchivedLinks = async (req: Request, res: Response) => {
   try {
@@ -10,7 +20,7 @@ export const getArchivedLinks = async (req: Request, res: Response) => {
   }
 };
 
-export const restoreArchivedLink = async (req: Request, res: Response) => {
+export const restoreArchivedLink = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -29,6 +39,9 @@ export const restoreArchivedLink = async (req: Request, res: Response) => {
     await new Link(restoredLink).save();
 
     await LinkArchived.deleteOne({ id });
+
+    // 🔥 Log who restored it
+    await logAction(req, `Restored link (${archivedLink.label})`);
 
     res.status(200).json({ message: "Link restored successfully" });
   } catch (err) {

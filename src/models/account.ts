@@ -15,8 +15,8 @@ const accountSchema = new Schema<AccountType>(
     password: { type: String, required: true },
     status: {
       type: String,
-      enum: ["active", "inactive", "blocked"],
-      default: "inactive",
+      enum: ["Pending", "Verified", "Blocked"],
+      default: "Pending",
     },
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },

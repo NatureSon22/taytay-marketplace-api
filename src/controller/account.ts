@@ -8,21 +8,67 @@ import {
 } from "../validators/account";
 import { hashPassword } from "../utils/password";
 
+import { Store } from "../models/store";
+
+export const getUserGrowth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const growth = await Account.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, 
+          users: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const formatted = growth.map((g) => ({
+      month: g._id, 
+      users: g.users,
+    }));
+
+    res.status(200).json({ data: formatted });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getAccounts = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const accounts = await Account.find();
+    const accounts = await Account.find().lean();
 
-    res
-      .status(201)
-      .json({ message: "Accounts retrieved successfully", data: accounts });
+    const accountsWithStore = await Promise.all(
+      accounts.map(async (acc) => {
+        const store = await Store.findOne({ owner: acc._id }).select("storeName");
+        return {
+          ...acc,
+          storeName: store ? store.storeName : null,
+        };
+      })
+    );
+
+    const totalVerified = accounts.filter(acc => acc.status === "Verified").length;
+    const totalPending = accounts.filter(acc => acc.status === "Pending").length;
+
+    res.status(200).json({
+      message: "Accounts retrieved successfully",
+      data: accountsWithStore,
+      totals: {
+        totalVerified,
+        totalPending,
+        totalAccounts: accounts.length,
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
+
+
 
 export const getAccount = async (
   req: Request<AccountIdParamType>,
@@ -129,6 +175,34 @@ export const deleteAccount = async (
     res
       .status(200)
       .json({ message: "Account deleted successfully", data: deletedAccount });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateSellerStatus = async (
+  req: Request<{ id: string }, unknown, { status: "Pending" | "Verified" | "Blocked" }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const updatedSeller = await Account.findOneAndUpdate(
+      { _id: id },
+      { status },
+      { new: true }
+    ).lean();
+
+    if (!updatedSeller) {
+      return next(new AppError("Seller not found", 404));
+    }
+
+    res.status(200).json({
+      message: "Seller status updated successfully",
+      data: updatedSeller,
+    });
   } catch (error) {
     next(error);
   }

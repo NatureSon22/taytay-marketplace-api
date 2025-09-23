@@ -3,6 +3,14 @@ import Category from "../models/category";
 import CategoryArchived from "../models/categoryArchived";
 import { StoreIdParamType } from "../validators/store";
 import { Store } from "../models/store";
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+  };
+}
 
 export const getCategories = async (req: Request, res: Response) => {
   try {
@@ -34,7 +42,7 @@ export const getAllCategoriesForStore = async (
   }
 };
 
-export const createCategory = async (req: Request, res: Response) => {
+export const createCategory = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id, label } = req.body;
 
@@ -49,17 +57,21 @@ export const createCategory = async (req: Request, res: Response) => {
         .json({ message: "Category with this ID already exists" });
     }
 
-    const newCategory = new Category({
-      id,
-      label,
-    });
-
+    const existingLabel = await Category.findOne({ label });
+    if (existingLabel) {
+      return res
+        .status(409)
+        .json({ message: "Category with this label already exists" });
+    }
+    
+    const newCategory = new Category({ id, label });
     await newCategory.save();
 
-    res.status(201).json({
-      message: "Category created successfully",
-      category: newCategory,
-    });
+    await logAction(req, `Created category (${label})`);
+
+    res
+      .status(201)
+      .json({ message: "Category created successfully", category: newCategory });
   } catch (error) {
     res.status(500).json({ message: "Failed to create Category", error });
   }
@@ -71,9 +83,7 @@ export const archiveCategory = async (req: Request, res: Response) => {
 
     const category = await Category.findOne({ id });
     if (!category) {
-      return res
-        .status(404)
-        .json({ message: `Category with id ${id} not found` });
+      return res.status(404).json({ message: `Category with id ${id} not found` });
     }
 
     const archivedCategory = new CategoryArchived({

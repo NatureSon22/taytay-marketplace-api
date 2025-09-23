@@ -3,10 +3,11 @@ import {
   getArchivedLinks,
   restoreArchivedLink,
 } from "../controller/linkArchivedController";
+import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
-router.get("/", getArchivedLinks);
-router.post("/restore/:id", restoreArchivedLink);
+router.get("/", verifyToken, getArchivedLinks);
+router.post("/restore/:id", verifyToken, restoreArchivedLink);
 
 export default router;

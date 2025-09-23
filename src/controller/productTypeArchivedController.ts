@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import ProductType from "../models/productType";
 import ProductTypeArchived from "../models/productTypeArchived";
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName?: string;
+    lastName?: string;
+  };
+}
 
 export const getProductTypesArchived = async (req: Request, res: Response) => {
   try {
@@ -11,7 +21,7 @@ export const getProductTypesArchived = async (req: Request, res: Response) => {
   }
 };
 
-export const restoreProductType = async (req: Request, res: Response) => {
+export const restoreProductType = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -28,7 +38,12 @@ export const restoreProductType = async (req: Request, res: Response) => {
 
     await ProductTypeArchived.deleteOne({ id });
 
-    res.status(200).json({ message: "Product Type restored successfully", restoredProductType });
+    await logAction(req, `Restored product type (${archivedProductType.label})`);
+
+    res.status(200).json({
+      message: "Product Type restored successfully",
+      restoredProductType,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error restoring Product Type", error });
   }

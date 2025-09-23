@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, model, Document } from "mongoose";
 
 export interface ILog extends Document {
   username: string;
@@ -15,4 +15,6 @@ const actLogSchema = new Schema<ILog>(
   }
 );
 
-export default model<ILog>("ActLog", actLogSchema);
+const ActLog = mongoose.models.ActLog || model<ILog>("ActLog", actLogSchema);
+
+export default ActLog;

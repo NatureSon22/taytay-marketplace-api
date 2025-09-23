@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import CategoryArchived from "../models/categoryArchived";
 import Category from "../models/category";
+import { logAction } from "../utils/logAction";
+
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName?: string;
+    lastName?: string;
+  };
+}
 
 export const getCategoriesArchived = async (req: Request, res: Response) => {
   try {
@@ -11,7 +21,7 @@ export const getCategoriesArchived = async (req: Request, res: Response) => {
   }
 };
 
-export const restoreCategory = async (req: Request, res: Response) => {
+export const restoreCategory = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -27,6 +37,8 @@ export const restoreCategory = async (req: Request, res: Response) => {
     await restoredCategory.save();
 
     await CategoryArchived.deleteOne({ id });
+
+    await logAction(req, `Restored category (${archivedCategory.label})`);
 
     res.status(200).json({ message: "Category restored successfully", restoredCategory });
   } catch (error) {
