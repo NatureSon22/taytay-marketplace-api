@@ -16,8 +16,8 @@ export const accountSchema = z.object({
   email: z.email({ error: "Invalid email address" }),
   password: z.string().min(1, { error: "Password is required" }),
   status: z
-    .enum(["active", "inactive", "blocked"], { error: "Invalid status" })
-    .default("inactive"),
+    .enum(["Pending", "Verified", "Blocked"], { error: "Invalid status" })
+    .default("Pending"),
   isVerified: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
 });

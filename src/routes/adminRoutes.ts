@@ -4,6 +4,7 @@ import {
   createAdmin,
   archiveAdmin,
   updateAdminStatus,
+  updateAdmin,
 } from "../controller/adminController";
 
 const router = Router();
@@ -12,5 +13,6 @@ router.get("/", getAdmins);
 router.post("/", createAdmin);
 router.delete("/:id/archive", archiveAdmin);
 router.put("/:id/status", updateAdminStatus);
+router.put("/:id", updateAdmin);
 
 export default router;

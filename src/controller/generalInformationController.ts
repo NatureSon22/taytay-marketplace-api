@@ -1,17 +1,32 @@
 import { Request, Response } from "express";
-import GeneralInformation, { IGeneralInformation } from "../models/generalInformation";
+import GeneralInformation from "../models/generalInformation";
+import { logAction } from "../utils/logAction";
 
-export const upsertGeneralInformation = async (req: Request, res: Response) => {
+interface AuthenticatedRequest extends Request {
+  account?: {
+    accountId: string;
+    type: "admin" | "account";
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
+export const upsertGeneralInformation = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = req.body;
     let info = await GeneralInformation.findOne();
-    
+    let actionMessage = "";
+
     if (info) {
       info.set(data);
       await info.save();
+      actionMessage = "Updated general information";
     } else {
       info = await GeneralInformation.create(data);
+      actionMessage = "Created general information";
     }
+
+    await logAction(req, actionMessage);
 
     res.status(200).json(info);
   } catch (err) {

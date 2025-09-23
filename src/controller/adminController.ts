@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Admin from "../models/admin";
 import AdminArchived from "../models/adminArchived";
 import nodemailer from "nodemailer";
-import { hashPassword } from "../utils/password";
+import { hashPassword, verifyPassword } from "../utils/password";
 import crypto from "crypto";
 
 export const getAdmins = async (req: Request, res: Response) => {
@@ -148,3 +148,39 @@ export const updateAdminStatus = async (req: Request, res: Response) => {
   }
 };
 
+export const updateAdmin = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { firstName, middleName, lastName, email, currentPassword, newPassword } = req.body;
+
+    const admin = await Admin.findOne({ id });
+    if (!admin) {
+      return res.status(404).json({ message: `Admin with id ${id} not found` });
+    }
+
+    // Handle password change
+    if (newPassword) {
+      const isMatch = await verifyPassword(currentPassword, admin.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      const hashed = await hashPassword(newPassword);
+      if (!hashed) {
+        return res.status(500).json({ message: "Failed to hash new password" });
+      }
+      admin.password = hashed;
+    }
+
+    if (firstName !== undefined) admin.firstName = firstName;
+    if (middleName !== undefined) admin.middleName = middleName;
+    if (lastName !== undefined) admin.lastName = lastName;
+    if (email !== undefined) admin.email = email;
+
+    await admin.save();
+
+    res.json({ message: "Admin updated successfully", admin });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error updating admin", error: error.message });
+  }
+};

@@ -7,7 +7,9 @@ import {
   deleteAccount,
   getAccount,
   getAccounts,
+  getUserGrowth,
   updateAccount,
+  updateSellerStatus,
 } from "../controller/account";
 import verifyToken from "../middleware/verifyToken";
 import multer from "multer";
@@ -15,6 +17,7 @@ import multer from "multer";
 const accountRouter = Router();
 const upload = multer();
 
+accountRouter.get("/growth", verifyToken, getUserGrowth);
 accountRouter.get("/", verifyToken, getAccounts);
 accountRouter.get(
   "/:id",
@@ -40,6 +43,12 @@ accountRouter.delete(
   verifyToken,
   validateParams(accountIdSchema),
   deleteAccount
+);
+accountRouter.patch(
+  "/:id/status",
+  verifyToken,
+  validateParams(accountIdSchema),
+  updateSellerStatus
 );
 
 export default accountRouter;

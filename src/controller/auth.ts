@@ -1,26 +1,27 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
 import AppError from "../utils/appError";
 import { Account } from "../models/account";
-import jwt from "jsonwebtoken";
+import Admin, { IAdmin } from "../models/admin";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { AccountType } from "../validators/account";
 import { StoreType } from "../validators/store";
 import { Store } from "../models/store";
 
 type JwtPayload = {
-  accountId: string;
+  userId: string;
+  type: "admin" | "account";
 };
 
 interface AuthenticatedRequest extends Request {
-  account: JwtPayload;
+  account: { accountId: any; type: any; };
+  user: JwtPayload;
 }
 
 const loginSchema = z.object({
   email: z.email({ message: "Invalid email" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be 8 characters long" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
 });
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
@@ -28,55 +29,59 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     const result = loginSchema.safeParse(req.body);
 
     if (!result.success) {
-      const errorMessages = result.error.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessages = result.error.issues.map((i) => i.message).join(", ");
       return next(new AppError(errorMessages, 422));
     }
 
     const { email, password } = result.data;
 
-    const user = await Account.findOne({ email });
+    let user: IAdmin | AccountType | null = await Admin.findOne({ email });
+    let userType: "admin" | "account" = "admin";
 
     if (!user) {
-      return next(new AppError("No account found on that email", 404));
+      user = await Account.findOne({ email });
+      userType = "account";
     }
 
+    if (!user) {
+      return next(new AppError("No account found with this email", 404));
+    }
+
+    // Verify password
     const isMatched = await verifyPassword(password, user.password);
+    if (!isMatched) return next(new AppError("Invalid credentials", 401));
 
-    if (!isMatched) {
-      return next(new AppError("Invalid credentials", 401));
+    // Narrow down by userType
+    if (userType === "admin") {
+      const admin = user as IAdmin;
+      if (admin.status === "Inactive") {
+        return next(
+          new AppError("Your admin account is inactive. Contact support", 403)
+        );
+      }
     }
 
-    if (!user.isVerified) {
-      return next(
-        new AppError(
-          "Your account is not verified yet. Please wait or contact support if this seems incorrect",
-          403
-        )
-      );
+    if (userType === "account") {
+      const account = user as AccountType;
+      if (account.status === "Pending") {
+        return next(
+          new AppError(
+            "Your account is not verified yet. Please wait or contact support",
+            403
+          )
+        );
+      }
+
+      if (account.status === "Blocked") {
+        return next(
+          new AppError("Your account has been blocked. Contact support", 403)
+        );
+      }
     }
 
-    if (user.status === "blocked") {
-      return next(
-        new AppError(
-          "Your account has been blocked. Contact support for assistance",
-          403
-        )
-      );
-    }
-
-    if (user.status === "inactive") {
-      return next(
-        new AppError(
-          "Your account is inactive. Contact support if you believe this is a mistake",
-          403
-        )
-      );
-    }
-
+    // Generate token
     const authToken = jwt.sign(
-      { accountId: user._id },
+      { accountId: user._id, type: userType },
       process.env.JWT_SECRET as string,
       { expiresIn: "1d" }
     );
@@ -88,9 +93,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    
-
-    res.status(200).json({ message: "Login Successful", data: user });
+    res.status(200).json({
+      message: "Login Successful",
+      data: user,
+      type: userType,
+    });
   } catch (error) {
     next(error);
   }
@@ -156,20 +163,22 @@ const register = async (
   }
 };
 
-const getLoggedInUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const getLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { accountId } = (req as AuthenticatedRequest).account;
+    const { accountId, type } = (req as AuthenticatedRequest).account;
 
-    const account = await Account.findById({ _id: accountId });
+    let user;
+    if (type === "admin") {
+      user = await Admin.findById(accountId);
+    } else {
+      user = await Account.findById(accountId);
+    }
 
-    res.status(200).json({ message: "Logged in", data: account });
+    res.status(200).json({ message: "Logged in", data: user, type });
   } catch (error) {
     next(error);
   }
 };
+
 
 export { login, logout, register, getLoggedInUser };

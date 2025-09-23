@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import ActLog from "../models/actlog"; 
+import ActLog from "../models/actLog";
 
 export const createLog = async (req: Request, res: Response) => {
   try {
