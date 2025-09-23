@@ -54,7 +54,12 @@ export const validateAndMerge =
   };
 
 export const validateBody =
-  (schema: ZodObject, withPictures = false, fieldForPicture = "") =>
+  (
+    schema: ZodObject,
+    withPictures = false,
+    fieldForPicture = "",
+    isSinglePicture = false
+  ) =>
   (req: MulterRequest, res: Response, next: NextFunction) => {
     try {
       let data = { ...req.body };
@@ -75,7 +80,8 @@ export const validateBody =
         const images = files.map((file) => file.path);
         data = {
           ...data,
-          [fieldForPicture]: images.length > 1 ? images : images[0],
+          [fieldForPicture]:
+            images.length > 1 || !isSinglePicture ? images : images[0],
         };
       }
 

@@ -17,7 +17,7 @@ import upload from "../middleware/upload";
 
 const productRouter = Router();
 
-productRouter.get("/", verifyToken, getProducts);
+productRouter.get("/", getProducts);
 productRouter.get(
   "/:id",
   verifyToken,

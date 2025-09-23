@@ -7,14 +7,15 @@ const objectIdString = z
   .transform((val) => new Types.ObjectId(val));
 
 export const productSchema = z.object({
-  productName: z.string().min(1, { error: "Product name is required" }),
-  productPrice: z.string().min(1, { error: "Product price is required" }),
+  productName: z.string().min(1, { message: "Product name is required" }),
+  productPrice: z.string().min(1, { message: "Product price is required" }),
   productDescription: z
     .string()
-    .min(1, { error: "Product description is required" }),
+    .min(1, { message: "Product description is required" }),
   productPictures: z
     .array(z.string())
-    .min(1, { error: "At least one picture is required" }),
+    .min(1, { message: "At least one picture is required" }),
+  storeId: z.string().min(1, { message: "Store ID is required" }),
   categories: z.array(objectIdString).optional(),
   types: z.array(objectIdString).optional(),
   links: z

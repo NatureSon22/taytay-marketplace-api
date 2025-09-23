@@ -7,6 +7,7 @@ import {
 } from "../validators/store";
 import { Store } from "../models/store";
 import AppError from "../utils/appError";
+import { Product } from "../models/product";
 
 const DATA_PER_PAGE = 20;
 
@@ -54,6 +55,23 @@ export const getStore = async (
     res
       .status(201)
       .json({ message: "Store retrieved successfully", data: store });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStoreProducts = async (
+  req: Request<StoreIdParamType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const products = await Product.find({ storeId: id });
+
+    res
+      .status(201)
+      .json({ message: "Store retrieved successfully", data: products });
   } catch (error) {
     next(error);
   }
@@ -125,11 +143,23 @@ export const updateStore = async (
 
     const updatedStore = await Store.findByIdAndUpdate(id, data, {
       new: true,
-    });
+    })
+      .populate("linkedAccounts.platform")
+      .lean();
+
+    const transformedLinkedAccounts = updatedStore?.linkedAccounts?.map(
+      (acc: any) => ({
+        logo: acc.platform?.link,
+        url: acc.url,
+        platform: acc.platform?._id.toString(),
+        platformName: acc.platform?.label,
+        isDeleted: acc.isDeleted ?? false,
+      })
+    );
 
     res.status(200).json({
       message: "Store updated successfully",
-      data: updatedStore,
+      data: { ...updatedStore, linkedAccounts: transformedLinkedAccounts },
     });
   } catch (error) {
     next(error);

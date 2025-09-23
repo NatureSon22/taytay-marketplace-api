@@ -9,6 +9,7 @@ import {
   createStore,
   deleteStore,
   getStore,
+  getStoreProducts,
   getStores,
   updateStore,
 } from "../controller/store";
@@ -29,6 +30,11 @@ storeRouter.get(
   getStores
 );
 storeRouter.get("/:id", verifyToken, validateParams(storeIdSchema), getStore);
+storeRouter.get(
+  "/:id/products",
+  validateParams(storeIdSchema),
+  getStoreProducts
+);
 storeRouter.post("/", verifyToken, validateBody(storeSchema), createStore);
 storeRouter.put(
   "/:id",
@@ -42,7 +48,7 @@ storeRouter.put(
   verifyToken,
   validateParams(storeIdSchema),
   upload.single("profilePicture"),
-  validateBody(updatedStoreSchema, true, "profilePicture"),
+  validateBody(updatedStoreSchema, true, "profilePicture", true),
   updateStore
 );
 storeRouter.delete(
