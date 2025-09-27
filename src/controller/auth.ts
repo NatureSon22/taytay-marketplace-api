@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from "../utils/password";
 import { AccountType } from "../validators/account";
 import { StoreType } from "../validators/store";
 import { Store } from "../models/store";
+import { Product } from "../models/product";
 
 type JwtPayload = {
   userId: string;
@@ -39,11 +40,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
     const { email, password } = result.data;
 
-    let user: IAdmin | AccountType | null = await Admin.findOne({ email });
+    let user: IAdmin | AccountType | null = await Admin.findOne({
+      email,
+    }).lean();
     let userType: "admin" | "account" = "admin";
 
     if (!user) {
-      user = await Account.findOne({ email });
+      user = await Account.findOne({ email }).lean();
       userType = "account";
     }
 
@@ -211,8 +214,10 @@ const getLoggedInUser = async (
       return next(new AppError("Store not found", 404));
     }
 
+    const noOfProducts = await Product.countDocuments({ storeId: store._id });
     const transformed = {
       ...store,
+      noOfProducts,
       linkedAccounts: store?.linkedAccounts?.map((acc: any) => ({
         logo: acc.platform?.link,
         url: acc.url,

@@ -8,8 +8,16 @@ import {
 import { Store } from "../models/store";
 import AppError from "../utils/appError";
 import { Product } from "../models/product";
+import { ILink } from "../models/link";
 
 const DATA_PER_PAGE = 20;
+
+type LinkedAccounts = {
+  logo?: string;
+  url: string;
+  isDeleted?: boolean;
+  platformName?: string;
+};
 
 export const getStores = async (
   req: Request,
@@ -42,7 +50,6 @@ export const getStores = async (
   }
 };
 
-
 export const getStore = async (
   req: Request<StoreIdParamType>,
   res: Response,
@@ -50,32 +57,86 @@ export const getStore = async (
 ) => {
   try {
     const { id } = req.params;
-    const store = await Store.findById(id);
+
+    const store = await Store.findById(id)
+      .populate<{ linkedAccounts: { platform: ILink; url: string }[] }>(
+        "linkedAccounts.platform"
+      )
+      .lean();
 
     if (!store) {
       return next(new AppError("Store not found", 404));
     }
 
-    res
-      .status(201)
-      .json({ message: "Store retrieved successfully", data: store });
+    const noOfProducts = await Product.countDocuments({ storeId: id });
+
+    const linkedAccounts: LinkedAccounts[] =
+      store.linkedAccounts?.map((link) => ({
+        logo: link.platform.link,
+        url: link.url,
+        platformName: link.platform.label,
+      })) ?? [];
+
+    res.status(200).json({
+      message: "Store retrieved successfully",
+      data: { ...store, noOfProducts, linkedAccounts },
+    });
   } catch (error) {
     next(error);
   }
 };
 
 export const getStoreProducts = async (
-  req: Request<StoreIdParamType>,
+  req: Request<
+    StoreIdParamType,
+    unknown,
+    unknown,
+    {
+      page?: string;
+      limit?: string;
+      productCategory?: string;
+      productType?: string;
+    }
+  >,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
-    const products = await Product.find({ storeId: id });
+    const { productCategory, productType, page = "1", limit = "1" } = req.query;
 
-    res
-      .status(201)
-      .json({ message: "Store retrieved successfully", data: products });
+    const filter: Record<string, any> = { storeId: id };
+
+    if (productCategory) {
+      filter.categories = { $in: [productCategory] };
+    }
+
+    if (productType) {
+      filter.types = { $in: [productType] };
+    }
+
+    // Convert pagination params to numbers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    // Query with pagination
+    const products = await Product.find(filter)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
+
+    // Count total for pagination info
+    const total = await Product.countDocuments(filter);
+
+    res.status(200).json({
+      message: "Store products retrieved successfully",
+      data: products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (error) {
     next(error);
   }

@@ -25,11 +25,10 @@ const storeRouter = Router();
 
 storeRouter.get(
   "/",
-  verifyToken,
   // validateQuery(storePaginationSchema),
   getStores
 );
-storeRouter.get("/:id", verifyToken, validateParams(storeIdSchema), getStore);
+storeRouter.get("/:id", validateParams(storeIdSchema), getStore);
 storeRouter.get(
   "/:id/products",
   validateParams(storeIdSchema),

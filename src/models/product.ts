@@ -14,6 +14,7 @@ const productSchema = new Schema<ProductType>(
     types: [
       { type: Schema.Types.ObjectId, ref: "ProductType", required: true },
     ],
+    views: { type: Number, default: 0 },
     links: [
       {
         platform: {

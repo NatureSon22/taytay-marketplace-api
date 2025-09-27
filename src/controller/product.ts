@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { Product } from "../models/product";
 import { ProductIdParamType, UpdateProductType } from "../validators/product";
 import AppError from "../utils/appError";
+import { ILink } from "../models/link";
 
 type MulterRequest = Request & {
   file?: Express.Multer.File;
@@ -12,16 +13,32 @@ type MulterRequest = Request & {
 };
 
 export const getProducts = async (
-  req: Request,
+  req: Request<
+    unknown,
+    unknown,
+    unknown,
+    { productCategory?: string; productType?: string }
+  >,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const products = await Product.find();
+    const { productCategory, productType } = req.query;
 
-    res
-      .status(200)
-      .json({ message: "Products retrieved successfully", data: products });
+    const filter: Record<string, any> = {};
+    if (productCategory) {
+      filter.categories = { $in: [productCategory] };
+    }
+    if (productType) {
+      filter.types = { $in: [productType] };
+    }
+
+    const products = await Product.find(filter);
+
+    res.status(200).json({
+      message: "Products retrieved successfully",
+      data: products,
+    });
   } catch (error) {
     next(error);
   }
@@ -34,15 +51,44 @@ export const getProduct = async (
 ) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById({ _id: id });
+
+    const product = await Product.findById(id)
+      .populate<{
+        links: { platform: ILink; url: string }[];
+        categories: { label: string }[];
+        types: { label: string }[];
+      }>([
+        { path: "links.platform" },
+        { path: "categories" },
+        { path: "types" },
+      ])
+      .lean();
 
     if (!product) {
       return next(new AppError("Product not found", 404));
     }
 
-    res
-      .status(200)
-      .json({ message: "Product retrieved successfully", data: product });
+    const categories =
+      product.categories.map((category) => category.label) ?? [];
+
+    const types = product.types.map((type) => type.label) ?? [];
+
+    const links =
+      product.links?.map((link) => ({
+        logo: link.platform.link,
+        platformName: link.platform.label,
+        url: link.url,
+      })) ?? [];
+
+    res.status(200).json({
+      message: "Product retrieved successfully",
+      data: {
+        ...product,
+        links,
+        categories,
+        types,
+      },
+    });
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,4 @@
-import { Types } from "mongoose";
 import { z } from "zod";
-import category from "../models/category";
-import productType from "../models/productType";
 
 const phoneRe = /^(09|\+639)\d{9}$/;
 export const objectIdSchema = z
