@@ -15,6 +15,7 @@ const productSchema = new Schema<ProductType>(
       { type: Schema.Types.ObjectId, ref: "ProductType", required: true },
     ],
     views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
     links: [
       {
         platform: {

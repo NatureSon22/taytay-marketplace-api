@@ -9,8 +9,8 @@ import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
-router.get("/", verifyToken, getCategories);
-router.get("/:id", verifyToken, getAllCategoriesForStore);
+router.get("/", getCategories);
+router.get("/:id", getAllCategoriesForStore);
 router.post("/", verifyToken, createCategory);
 router.delete("/:id/archive", verifyToken, archiveCategory);
 

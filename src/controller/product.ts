@@ -5,27 +5,33 @@ import { ProductIdParamType, UpdateProductType } from "../validators/product";
 import AppError from "../utils/appError";
 import { ILink } from "../models/link";
 
-type MulterRequest = Request & {
-  file?: Express.Multer.File;
-  files?:
-    | Express.Multer.File[]
-    | { [fieldname: string]: Express.Multer.File[] };
-};
-
 export const getProducts = async (
   req: Request<
     unknown,
     unknown,
     unknown,
-    { productCategory?: string; productType?: string }
+    {
+      page?: string;
+      limit?: string;
+      productCategory?: string;
+      productType?: string;
+      sort?: string;
+    }
   >,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { productCategory, productType } = req.query;
+    const {
+      productCategory,
+      productType,
+      page = "1",
+      limit = "20",
+      sort,
+    } = req.query;
 
     const filter: Record<string, any> = {};
+
     if (productCategory) {
       filter.categories = { $in: [productCategory] };
     }
@@ -33,11 +39,59 @@ export const getProducts = async (
       filter.types = { $in: [productType] };
     }
 
-    const products = await Product.find(filter);
+    const sortObj: Record<string, 1 | -1> = {};
+    let sortAlphabetical = false;
+
+    if (sort) {
+      const sortArray = JSON.parse(sort as string) as {
+        field: string;
+        order: string;
+      }[];
+
+      sortArray.forEach(({ field, order }) => {
+        if (field === "price") {
+          sortObj.productPrice = order === "low-high" ? 1 : -1;
+        }
+
+        if (field === "popularity" && order === "most-liked") {
+          sortObj.likes = -1;
+        }
+
+        if (field === "popularity" && order === "most-viewed") {
+          sortObj.views = -1;
+        }
+
+        if (field === "alphabetical") {
+          sortObj.productName = order === "a-z" ? 1 : -1;
+          sortAlphabetical = true; // ✅ only set when alphabetical is chosen
+        }
+      });
+    }
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    const query = Product.find(filter)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .sort(sortObj);
+
+    if (sortAlphabetical) {
+      query.collation({ locale: "en", strength: 2 });
+    }
+
+    const products = await query;
+    const total = await Product.countDocuments(filter);
 
     res.status(200).json({
       message: "Products retrieved successfully",
       data: products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     next(error);

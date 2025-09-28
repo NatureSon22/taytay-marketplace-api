@@ -9,8 +9,8 @@ import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
-router.get("/", verifyToken, getProductTypes);
-router.get("/:id", verifyToken, getAllProductTypesForStore);
+router.get("/", getProductTypes);
+router.get("/:id", getAllProductTypesForStore);
 router.post("/", verifyToken, createProductType);
 router.delete("/:id/archive", verifyToken, archiveProductType);
 

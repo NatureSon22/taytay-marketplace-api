@@ -19,6 +19,7 @@ export const productSchema = z.object({
   categories: z.array(objectIdString).optional(),
   types: z.array(objectIdString).optional(),
   views: z.number().default(0),
+  likes: z.number().default(0),
   links: z
     .array(
       z.object({

@@ -103,7 +103,13 @@ export const getStoreProducts = async (
 ) => {
   try {
     const { id } = req.params;
-    const { productCategory, productType, page = "1", limit = "1" } = req.query;
+    const {
+      productCategory,
+      productType,
+      page = "1",
+      limit = "20",
+      
+    } = req.query;
 
     const filter: Record<string, any> = { storeId: id };
 
