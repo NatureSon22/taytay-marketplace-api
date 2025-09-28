@@ -148,7 +148,7 @@ export const getProduct = async (
   }
 };
 
-function escapeRegex(text) {
+function escapeRegex(text: string) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
 
