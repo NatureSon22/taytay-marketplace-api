@@ -1,9 +1,9 @@
 import { ProductType } from "./../validators/product";
 import { NextFunction, Request, Response } from "express";
-import { Product } from "../models/product";
 import { ProductIdParamType, UpdateProductType } from "../validators/product";
 import AppError from "../utils/appError";
 import { ILink } from "../models/link";
+import { Product } from "../models/product";
 
 export const getProducts = async (
   req: Request<
@@ -63,7 +63,7 @@ export const getProducts = async (
 
         if (field === "alphabetical") {
           sortObj.productName = order === "a-z" ? 1 : -1;
-          sortAlphabetical = true; // ✅ only set when alphabetical is chosen
+          sortAlphabetical = true;
         }
       });
     }
@@ -142,6 +142,49 @@ export const getProduct = async (
         categories,
         types,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
+
+export const getProductSuggestions = async (
+  req: Request<
+    unknown,
+    unknown,
+    unknown,
+    {
+      productName?: string;
+    }
+  >,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { productName } = req.query;
+
+    if (!productName) {
+      return next(new AppError("Product name is required", 400));
+    }
+
+    const products = await Product.find({
+      productName: { $regex: `^${escapeRegex(productName)}` },
+    })
+      .collation({ locale: "en", strength: 2 }) // ensures case-insensitive search
+      .limit(10);
+
+    const formatItems = products.map((product) => ({
+      label: product.productName,
+      value: product._id,
+    }));
+
+    res.status(200).json({
+      message: "Products retrieved successfully",
+      data: formatItems,
     });
   } catch (error) {
     next(error);

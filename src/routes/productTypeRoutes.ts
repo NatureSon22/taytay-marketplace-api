@@ -11,6 +11,7 @@ const router = Router();
 
 router.get("/", getProductTypes);
 router.get("/:id", getAllProductTypesForStore);
+
 router.post("/", verifyToken, createProductType);
 router.delete("/:id/archive", verifyToken, archiveProductType);
 

@@ -3,7 +3,7 @@ import { ProductType } from "../validators/product";
 
 const productSchema = new Schema<ProductType>(
   {
-    productName: { type: String, required: true },
+    productName: { type: String, required: true, index: true },
     productPrice: { type: String, required: true },
     productDescription: { type: String, required: true },
     productPictures: [{ type: String, required: true }],

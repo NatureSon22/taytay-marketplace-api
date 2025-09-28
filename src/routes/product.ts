@@ -5,6 +5,7 @@ import {
   deleteProduct,
   getProduct,
   getProducts,
+  getProductSuggestions,
   updateProduct,
 } from "../controller/product";
 import { validateBody, validateParams } from "../middleware/validate";
@@ -18,6 +19,7 @@ import upload from "../middleware/upload";
 const productRouter = Router();
 
 productRouter.get("/", getProducts);
+productRouter.get("/suggestions", getProductSuggestions);
 productRouter.get("/:id", validateParams(productIdSchema), getProduct);
 productRouter.post(
   "/",
