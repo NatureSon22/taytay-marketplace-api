@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
-import ActLog from "../models/actLog";
+import ActLog from "../models/actlog";
 
 export const createLog = async (req: Request, res: Response) => {
   try {
     const { username, action } = req.body;
 
     if (!username || !action) {
-      return res.status(400).json({ message: "Username and action are required" });
+      return res
+        .status(400)
+        .json({ message: "Username and action are required" });
     }
 
-    const newLog = await ActLog.create({ username, action });
+    const newLog = ActLog.create({ username, action });
 
     res.status(201).json(newLog);
   } catch (error) {
@@ -19,7 +21,7 @@ export const createLog = async (req: Request, res: Response) => {
 
 export const getAllLogs = async (_req: Request, res: Response) => {
   try {
-    const logs = await ActLog.find().sort({ createdAt: -1 }); 
+    const logs = await ActLog.find().sort({ createdAt: -1 });
     res.status(200).json(logs);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch logs", error });

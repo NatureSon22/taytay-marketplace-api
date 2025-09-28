@@ -1,11 +1,34 @@
 import { model, Schema, Types } from "mongoose";
-import { StoreType } from "../validators/store";
+interface StoreType {
+  profilePicture?: string;
+  description?: string;
+  storeName: string;
+  joinedDate?: string; // ISO string
+  contactNumber: string;
+  email: string;
+  stallNumbers: string[];
+  owner: Types.ObjectId; // Reference to Account
+  permit?: string;
+  linkedAccounts?: {
+    isDeleted?: boolean;
+    platform: Types.ObjectId; // Reference to Link
+    url: string;
+  }[];
+  categories?: {
+    label: string;
+  }[];
+  productType?: {
+    label: string;
+  }[];
+  paymentMethod?: Types.ObjectId[]; // Reference to PaymentMethod
+  isDeleted?: boolean;
+}
 
 const storeSchema = new Schema<StoreType>({
   profilePicture: { type: String },
   description: { type: String },
   storeName: { type: String, required: true },
-  joinedDate: { type: Date, default: Date.now },
+  joinedDate: { type: String, default: () => new Date().toISOString() },
   contactNumber: { type: String, required: true },
   email: { type: String, required: true },
   stallNumbers: [{ type: String, required: true }],

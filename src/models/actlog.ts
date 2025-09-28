@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, model, Model, Document } from "mongoose";
 
 export interface ILog extends Document {
   username: string;
@@ -10,11 +10,11 @@ const actLogSchema = new Schema<ILog>(
     username: { type: String, required: true },
     action: { type: String, required: true },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const ActLog = mongoose.models.ActLog || model<ILog>("ActLog", actLogSchema);
+// Explicitly type the model
+const ActLog: Model<ILog> =
+  (mongoose.models.ActLog as Model<ILog>) || model<ILog>("ActLog", actLogSchema);
 
 export default ActLog;

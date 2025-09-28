@@ -9,6 +9,8 @@ import { Store } from "../models/store";
 import AppError from "../utils/appError";
 import { Product } from "../models/product";
 import { ILink } from "../models/link";
+import type { LinkedAccountType } from "./../validators/store";
+import { Types } from "mongoose";
 
 const DATA_PER_PAGE = 20;
 
@@ -108,7 +110,6 @@ export const getStoreProducts = async (
       productType,
       page = "1",
       limit = "20",
-      
     } = req.query;
 
     const filter: Record<string, any> = { storeId: id };
@@ -186,7 +187,7 @@ export const updateStore = async (
     let mergedAccounts = store.linkedAccounts || [];
 
     if (data.linkedAccounts && data.linkedAccounts.length > 0) {
-      data.linkedAccounts.forEach((incoming) => {
+      data.linkedAccounts.forEach((incoming: LinkedAccountType) => {
         const idx = mergedAccounts.findIndex(
           (current) =>
             current.platform.toString() === incoming.platform.toString()
@@ -204,13 +205,21 @@ export const updateStore = async (
         } else {
           // add new if not deleted
           if (!incoming.isDeleted) {
-            mergedAccounts.push(incoming);
+            mergedAccounts.push({
+              ...incoming,
+              platform: new Types.ObjectId(incoming.platform),
+            });
           }
         }
       });
     }
 
-    data.linkedAccounts = mergedAccounts;
+    const formattedmergedAccounts = mergedAccounts.map((account) => ({
+      ...account,
+      platform: account.platform.toString(),
+    }));
+
+    data.linkedAccounts = formattedmergedAccounts;
 
     const updatedStore = await Store.findByIdAndUpdate(id, data, {
       new: true,

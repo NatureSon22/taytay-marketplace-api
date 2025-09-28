@@ -1,5 +1,5 @@
 import { Request } from "express";
-import ActLog from "../models/actLog";
+import ActLog from "../models/actlog";
 import Admin from "../models/admin";
 import { Account } from "../models/account";
 
@@ -24,7 +24,7 @@ export const logAction = async (req: Request, action: string) => {
       }
     }
 
-    await ActLog.create({
+    const log = await ActLog.create({
       username,
       action,
     });

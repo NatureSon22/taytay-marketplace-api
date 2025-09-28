@@ -1,9 +1,16 @@
+import { Types } from "mongoose";
 import { z } from "zod";
 
 const phoneRe = /^(09|\+639)\d{9}$/;
 export const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");
+
+const linkedAccount = z.object({
+  platform: objectIdSchema,
+  url: z.string().min(1, { error: "Link is required" }),
+  isDeleted: z.boolean().optional(),
+});
 
 export const storeSchema = z.object({
   profilePicture: z.string().optional(),
@@ -33,15 +40,7 @@ export const storeSchema = z.object({
       })
     )
     .optional(),
-  linkedAccounts: z
-    .array(
-      z.object({
-        platform: objectIdSchema,
-        url: z.string().min(1, { error: "Link is required" }),
-        isDeleted: z.boolean().default(false),
-      })
-    )
-    .optional(),
+  linkedAccounts: z.array(linkedAccount).optional(),
   paymentMethod: z.array(objectIdSchema).optional(),
   isDeleted: z.boolean().default(false),
 });
@@ -60,3 +59,4 @@ export type StoreType = z.infer<typeof storeSchema>;
 export type UpdateStoreType = z.infer<typeof updatedStoreSchema>;
 export type StoreIdParamType = z.infer<typeof storeIdSchema>;
 export type StorePaginationType = z.infer<typeof storePaginationSchema>;
+export type LinkedAccountType = z.infer<typeof linkedAccount>;
