@@ -4,9 +4,9 @@ import {
   createLink,
   updateLink,
   archiveLink,
-} from "../controller/linkController";
-import upload from "../middleware/upload";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/linkController.js";
+import upload from "../middleware/upload.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

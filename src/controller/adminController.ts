@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import Admin from "../models/admin";
-import AdminArchived from "../models/adminArchived";
+import Admin from "../models/admin.js";
+import AdminArchived from "../models/adminArchived.js";
 import nodemailer from "nodemailer";
-import { hashPassword, verifyPassword } from "../utils/password";
+import { hashPassword, verifyPassword } from "../utils/password.js";
 import crypto from "crypto";
 
 export const getAdmins = async (req: Request, res: Response) => {

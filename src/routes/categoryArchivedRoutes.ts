@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getCategoriesArchived, restoreCategory } from "../controller/categoryArchivedController";
-import verifyToken from "../middleware/verifyToken";
+import { getCategoriesArchived, restoreCategory } from "../controller/categoryArchivedController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

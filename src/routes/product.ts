@@ -1,5 +1,5 @@
 import { Router } from "express";
-import verifyToken from "../middleware/verifyToken";
+import verifyToken from "../middleware/verifyToken.js";
 import {
   createProduct,
   deleteProduct,
@@ -7,14 +7,14 @@ import {
   getProducts,
   getProductSuggestions,
   updateProduct,
-} from "../controller/product";
-import { validateBody, validateParams } from "../middleware/validate";
+} from "../controller/product.js";
+import { validateBody, validateParams } from "../middleware/validate.js";
 import {
   productIdSchema,
   productSchema,
   updateProductSchema,
-} from "../validators/product";
-import upload from "../middleware/upload";
+} from "../validators/product.js";
+import upload from "../middleware/upload.js";
 
 const productRouter = Router();
 

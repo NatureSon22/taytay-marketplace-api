@@ -1,15 +1,15 @@
-import { StorePaginationType } from "./../validators/store";
+import { StorePaginationType } from "./../validators/store.js";
 import { Request, Response, NextFunction } from "express";
 import {
   StoreIdParamType,
   StoreType,
   UpdateStoreType,
-} from "../validators/store";
-import { Store } from "../models/store";
-import AppError from "../utils/appError";
-import { Product } from "../models/product";
-import { ILink } from "../models/link";
-import type { LinkedAccountType } from "./../validators/store";
+} from "../validators/store.js";
+import { Store } from "../models/store.js";
+import AppError from "../utils/appError.js";
+import { Product } from "../models/product.js";
+import { ILink } from "../models/link.js";
+import type { LinkedAccountType } from "./../validators/store.js";
 import { Types } from "mongoose";
 
 const DATA_PER_PAGE = 20;

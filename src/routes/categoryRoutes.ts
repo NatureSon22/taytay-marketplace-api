@@ -4,8 +4,8 @@ import {
   getCategories,
   archiveCategory,
   getAllCategoriesForStore,
-} from "../controller/categoryController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/categoryController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

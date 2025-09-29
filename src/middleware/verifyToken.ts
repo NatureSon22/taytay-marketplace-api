@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import AppError from "../utils/appError";
+import AppError from "../utils/appError.js";
 import jwt from "jsonwebtoken";
-import Admin from "../models/admin";
-import { Account } from "../models/account";
+import Admin from "../models/admin.js";
+import { Account } from "../models/account.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

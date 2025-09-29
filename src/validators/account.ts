@@ -2,9 +2,11 @@ import { Types } from "mongoose";
 import { z } from "zod";
 
 export const accountSchema = z.object({
-  _id: z.instanceof(Types.ObjectId, {
-    message: "Invalid ObjectId",
-  }),
+  _id: z
+    .instanceof(Types.ObjectId, {
+      message: "Invalid ObjectId",
+    })
+    .optional(),
   firstName: z.string().min(1, { error: "First name is required" }),
   middleName: z.string().optional(),
   lastName: z.string().min(1, { error: "Last name is required" }),

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import ProductType from "../models/productType";
-import ProductTypeArchived from "../models/productTypeArchived";
-import { logAction } from "../utils/logAction";
+import ProductType from "../models/productType.js";
+import ProductTypeArchived from "../models/productTypeArchived.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

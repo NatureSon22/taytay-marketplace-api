@@ -5,7 +5,7 @@ import {
   archiveAdmin,
   updateAdminStatus,
   updateAdmin,
-} from "../controller/adminController";
+} from "../controller/adminController.js";
 
 const router = Router();
 

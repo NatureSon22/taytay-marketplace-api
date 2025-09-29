@@ -4,8 +4,8 @@ import {
   getProductTypes,
   archiveProductType,
   getAllProductTypesForStore,
-} from "../controller/productTypeController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/productTypeController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

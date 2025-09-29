@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import CategoryArchived from "../models/categoryArchived";
-import Category from "../models/category";
-import { logAction } from "../utils/logAction";
+import CategoryArchived from "../models/categoryArchived.js";
+import Category from "../models/category.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

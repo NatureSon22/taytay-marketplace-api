@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import AdminArchived from "../models/adminArchived";
-import Admin from "../models/admin";  
-import { logAction } from "../utils/logAction";
+import AdminArchived from "../models/adminArchived.js";
+import Admin from "../models/admin.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {
@@ -21,13 +21,18 @@ export const getAdminsArchived = async (req: Request, res: Response) => {
   }
 };
 
-export const restoreAdmin = async (req: AuthenticatedRequest, res: Response) => {
+export const restoreAdmin = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { id } = req.params;
 
     const archivedAdmin = await AdminArchived.findOne({ id });
     if (!archivedAdmin) {
-      return res.status(404).json({ message: `Archived admin with id ${id} not found` });
+      return res
+        .status(404)
+        .json({ message: `Archived admin with id ${id} not found` });
     }
 
     const restoredAdmin = new Admin({
@@ -45,9 +50,14 @@ export const restoreAdmin = async (req: AuthenticatedRequest, res: Response) => 
     await AdminArchived.deleteOne({ id });
 
     // 🔥 Log action
-    await logAction(req, `Restored admin (${archivedAdmin.firstName} ${archivedAdmin.lastName})`);
+    await logAction(
+      req,
+      `Restored admin (${archivedAdmin.firstName} ${archivedAdmin.lastName})`
+    );
 
-    res.status(200).json({ message: "Admin restored successfully", restoredAdmin });
+    res
+      .status(200)
+      .json({ message: "Admin restored successfully", restoredAdmin });
   } catch (error) {
     res.status(500).json({ message: "Error restoring admin", error });
   }

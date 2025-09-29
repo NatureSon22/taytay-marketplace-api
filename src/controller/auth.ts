@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
-import AppError from "../utils/appError";
-import { Account } from "../models/account";
-import Admin, { IAdmin } from "../models/admin";
-import { hashPassword, verifyPassword } from "../utils/password";
-import { AccountType } from "../validators/account";
-import { StoreType } from "../validators/store";
-import { Store } from "../models/store";
-import { Product } from "../models/product";
+import AppError from "../utils/appError.js";
+import { Account } from "../models/account.js";
+import Admin, { IAdmin } from "../models/admin.js";
+import { hashPassword, verifyPassword } from "../utils/password.js";
+import { AccountType } from "../validators/account.js";
+import { StoreType } from "../validators/store.js";
+import { Store } from "../models/store.js";
+import { Product } from "../models/product.js";
 
 type JwtPayload = {
   userId: string;
@@ -147,6 +147,7 @@ const register = async (
 ) => {
   try {
     const data = req.body;
+    console.log("register")
 
     const existing = await Account.findOne({ email: data.email });
 

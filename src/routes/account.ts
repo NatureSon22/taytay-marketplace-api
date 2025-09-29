@@ -1,7 +1,7 @@
-import { updateAccountSchema } from "./../validators/account";
+import { updateAccountSchema } from "./../validators/account.js";
 import { Router } from "express";
-import { validateBody, validateParams } from "../middleware/validate";
-import { accountIdSchema, accountSchema } from "../validators/account";
+import { validateBody, validateParams } from "../middleware/validate.js";
+import { accountIdSchema, accountSchema } from "../validators/account.js";
 import {
   createAccount,
   deleteAccount,
@@ -10,8 +10,8 @@ import {
   getUserGrowth,
   updateAccount,
   updateSellerStatus,
-} from "../controller/account";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/account.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const accountRouter = Router();
 

@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   getArchivedLinks,
   restoreArchivedLink,
-} from "../controller/linkArchivedController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/linkArchivedController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 
