@@ -27,7 +27,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
-      "https://taytay-marketplace.netlify.app/",
+      "https://taytay-marketplace.netlify.app",
     ],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
