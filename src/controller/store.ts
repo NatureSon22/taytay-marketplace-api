@@ -1,4 +1,3 @@
-import { StorePaginationType } from "./../validators/store.js";
 import { Request, Response, NextFunction } from "express";
 import {
   StoreIdParamType,
@@ -22,26 +21,52 @@ type LinkedAccounts = {
 };
 
 export const getStores = async (
-  req: Request,
+  req: Request<
+    unknown,
+    unknown,
+    unknown,
+    {
+      page?: string;
+      limit?: string;
+      storeName?: string;
+      sort?: "newest" | "most-visited";
+    }
+  >,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { limit, page } = req.query as unknown as StorePaginationType;
+    const { limit, page, storeName, sort } = req.query;
 
     const numericLimit = Number(limit) || DATA_PER_PAGE;
     const numericPage = Number(page) || 1;
-
     const offset = (numericPage - 1) * numericLimit;
 
+    const filter: Record<string, any> = {};
+    if (storeName) {
+      filter.storeName = { $regex: storeName, $options: "i" };
+    }
+
+    const sortObj: Record<string, 1 | -1> = {};
+
+    console.log("Sort: " + sort);
+    if (sort) {
+      if (sort === "newest") {
+        sortObj.createdAt = -1;
+      }
+      if (sort === "most-visited") {
+        sortObj.views = -1;
+      }
+    }
+
     const [stores, total] = await Promise.all([
-      Store.find().skip(offset).limit(numericLimit).exec(),
-      Store.countDocuments(),
+      Store.find(filter).sort(sortObj).skip(offset).limit(numericLimit).exec(),
+      Store.countDocuments(filter),
     ]);
 
     res.status(200).json({
       message: "Stores retrieved successfully",
-      data: stores,
+      stores,
       total,
       page: numericPage,
       limit: numericLimit,

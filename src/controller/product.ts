@@ -1,6 +1,9 @@
 import { ProductType } from "./../validators/product.js";
 import { NextFunction, Request, Response } from "express";
-import { ProductIdParamType, UpdateProductType } from "../validators/product.js";
+import {
+  ProductIdParamType,
+  UpdateProductType,
+} from "../validators/product.js";
 import AppError from "../utils/appError.js";
 import { ILink } from "../models/link.js";
 import { Product } from "../models/product.js";
@@ -64,6 +67,10 @@ export const getProducts = async (
         if (field === "alphabetical") {
           sortObj.productName = order === "a-z" ? 1 : -1;
           sortAlphabetical = true;
+        }
+
+        if (field === "arrival") {
+          sortObj.createdAt = order === "recent" ? 1 : -1;
         }
       });
     }
