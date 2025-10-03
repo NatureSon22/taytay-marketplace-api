@@ -4,7 +4,6 @@ import { getLoggedInUser, login, logout, register } from "../controller/auth";
 import { validateAndMerge } from "../middleware/validate";
 import { storeSchema } from "../validators/store";
 import multer from "multer";
-import verifyToken from "../middleware/verifyToken";
 
 const authRouter = Router();
 const upload = multer();
@@ -18,6 +17,6 @@ authRouter.post(
   validateAndMerge(storeSchema),
   register
 );
-authRouter.get("/user", verifyToken, getLoggedInUser);
+authRouter.get("/user", getLoggedInUser);
 
 export default authRouter;

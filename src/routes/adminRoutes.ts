@@ -6,13 +6,14 @@ import {
   updateAdminStatus,
   updateAdmin,
 } from "../controller/adminController";
+import verifyToken from "../middleware/verifyToken";
 
 const router = Router();
 
 router.get("/", getAdmins);
-router.post("/", createAdmin);
-router.delete("/:id/archive", archiveAdmin);
-router.put("/:id/status", updateAdminStatus);
-router.put("/:id", updateAdmin);
+router.post("/", verifyToken, createAdmin);
+router.delete("/:id/archive", verifyToken, archiveAdmin);
+router.put("/:id/status", verifyToken, updateAdminStatus);
+router.put("/:id", verifyToken, updateAdmin);
 
 export default router;

@@ -1,18 +1,9 @@
 import { Request, Response } from "express";
 import Admin from "../models/admin";
 import AdminArchived from "../models/adminArchived";
-import nodemailer from "nodemailer";
 import { hashPassword, verifyPassword } from "../utils/password";
 import crypto from "crypto";
-
-export const getAdmins = async (req: Request, res: Response) => {
-  try {
-    const admins = await Admin.find();
-    res.json(admins);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching admins", error });
-  }
-};
+import brevo from "@getbrevo/brevo";
 
 export const createAdmin = async (req: Request, res: Response) => {
   try {
@@ -33,7 +24,6 @@ export const createAdmin = async (req: Request, res: Response) => {
     }
 
     const generatedPassword = crypto.randomBytes(6).toString("hex");
-
     const hashedPassword = await hashPassword(generatedPassword);
 
     const newAdmin = new Admin({
@@ -42,55 +32,63 @@ export const createAdmin = async (req: Request, res: Response) => {
       firstName,
       middleName,
       lastName,
-      password: hashedPassword, 
+      password: hashedPassword,
       status: "Active",
       role,
     });
 
     await newAdmin.save();
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(
+      brevo.TransactionalEmailsApiApiKeys.apiKey,
+      process.env.BREVO_API_KEY as string
+    );
 
-    await transporter.sendMail({
-      from: `"Taytay Marketplace" <${process.env.SMTP_EMAIL}>`,
-      to: email,
-      subject: "Welcome to Taytay Marketplace 🎉",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
-          <div style="max-width: 600px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="background: #4CAF50; padding: 20px; text-align: center; color: white;">
-              <h1>Welcome, ${firstName}!</h1>
-            </div>
-            <div style="padding: 20px; color: #333;">
-              <p>Hi <strong>${firstName} ${lastName}</strong>,</p>
-              <p>Your admin account has been created successfully 🎉</p>
-              <p><b>Email:</b> ${email}</p>
-              <p><b>Password:</b> ${generatedPassword}</p>
-              <p style="margin-top: 20px;">
-                You can now log in and start managing the platform.
-              </p>
-            </div>
-            <div style="background: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #555;">
-              © 2025 Taytay Marketplace. All rights reserved.
-            </div>
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.subject = "Welcome to Taytay Marketplace 🎉";
+    sendSmtpEmail.sender = { name: "Taytay Marketplace", email: process.env.SMTP_EMAIL as string };
+    sendSmtpEmail.to = [{ email, name: `${firstName} ${lastName}` }];
+    sendSmtpEmail.htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
+        <div style="max-width: 600px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <div style="background: #4CAF50; padding: 20px; text-align: center; color: white;">
+            <h1>Welcome, ${firstName}!</h1>
+          </div>
+          <div style="padding: 20px; color: #333;">
+            <p>Hi <strong>${firstName} ${lastName}</strong>,</p>
+            <p>Your admin account has been created successfully 🎉</p>
+            <p><b>Email:</b> ${email}</p>
+            <p><b>Password:</b> ${generatedPassword}</p>
+            <p style="margin-top: 20px;">
+              You can now log in and start managing the platform.
+            </p>
+          </div>
+          <div style="background: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #555;">
+            © 2025 Taytay Marketplace. All rights reserved.
           </div>
         </div>
-      `,
-    });
+      </div>
+    `;
+
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
 
     res.status(201).json({ message: "Admin created and email sent", admin: newAdmin });
   } catch (error: any) {
-    console.error("Error creating admin:", error);
+    console.error("Error creating admin:", error.response?.body || error);
     res.status(500).json({
       message: "Failed to create admin",
       error: error.message || error.toString(),
     });
+  }
+};
+
+export const getAdmins = async (req: Request, res: Response) => {
+  try {
+    const admins = await Admin.find();
+    res.json(admins);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching admins", error });
   }
 };
 
