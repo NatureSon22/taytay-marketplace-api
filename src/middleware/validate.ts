@@ -37,19 +37,36 @@ function deepMerge(target: any, source: any): any {
 }
 
 export const validateAndMerge =
-  (schema: ZodObject) => (req: Request, res: Response, next: NextFunction) => {
-    const base = (req as any).validatedBody ?? req.body;
+  <T extends ZodRawShape>(
+    schema: ZodObject<T>,
+    withPicture = false,
+    fieldForPicture = ""
+  ) =>
+  (req: MulterRequest, res: Response, next: NextFunction) => {
+    let base = (req as any).validatedBody ?? req.body;
+
+    console.log(base);
+
+    if (withPicture && fieldForPicture) {
+      if (req.file) {
+        base = { ...base, [fieldForPicture]: req.file.path };
+      } else if (req.files) {
+        base = { ...base, [fieldForPicture]: req.files };
+      }
+    }
+
     const result = schema.safeParse(base);
 
     if (!result.success) {
-      console.log(base);
-      const errorMessages = result.error.issues
-        .map((i) => i.message)
+      const message = result.error.issues
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
         .join(", ");
-      return next(new AppError(errorMessages, 422));
+      return next(new AppError(message, 422));
     }
 
+    // Merge sanitized data back
     req.body = deepMerge(base, result.data);
+
     return next();
   };
 

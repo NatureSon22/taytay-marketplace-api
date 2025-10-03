@@ -25,7 +25,7 @@ export const storeSchema = z.object({
     .array(z.string())
     .min(1, { error: "Stall numbers are required" }),
   owner: objectIdSchema.optional(),
-  permit: z.string().optional(),
+  permit: z.string().min(1, { error: "Permit is required" }),
   categories: z
     .array(
       z.object({

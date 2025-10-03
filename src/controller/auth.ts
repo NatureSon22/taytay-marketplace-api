@@ -147,7 +147,6 @@ const register = async (
 ) => {
   try {
     const data = req.body;
-    console.log("register")
 
     const existing = await Account.findOne({ email: data.email });
 
@@ -168,18 +167,18 @@ const register = async (
       return next(new AppError("Failed to create account", 500));
     }
 
-    const authToken = jwt.sign(
-      { accountId: account._id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1d" }
-    );
+    // const authToken = jwt.sign(
+    //   { accountId: account._id },
+    //   process.env.JWT_SECRET as string,
+    //   { expiresIn: "1d" }
+    // );
 
-    res.cookie("authToken", authToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    // res.cookie("authToken", authToken, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "none",
+    //   maxAge: 24 * 60 * 60 * 1000,
+    // });
 
     res.status(200).json({ message: "Account created successfully" });
   } catch (error) {
