@@ -44,14 +44,15 @@ export const getAccounts = async (
   try {
     const accounts = await Account.find().lean();
 
-    const accountsWithStore = await Promise.all(
+    const accountsWithStoreAndPermit = await Promise.all(
       accounts.map(async (acc) => {
         const store = await Store.findOne({ owner: acc._id }).select(
-          "storeName"
-        );
+          "storeName permit"
+        ); // <- add permit here
         return {
           ...acc,
           storeName: store ? store.storeName : null,
+          permit: store ? store.permit : null, // <- include permit field
         };
       })
     );
@@ -65,7 +66,7 @@ export const getAccounts = async (
 
     res.status(200).json({
       message: "Accounts retrieved successfully",
-      data: accountsWithStore,
+      data: accountsWithStoreAndPermit,
       totals: {
         totalVerified,
         totalPending,

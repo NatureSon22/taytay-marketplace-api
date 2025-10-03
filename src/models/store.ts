@@ -13,7 +13,7 @@ interface StoreType {
   linkedAccounts?: {
     isDeleted?: boolean;
     platform: Types.ObjectId; // Reference to Link
-    url: string;
+    url: string;  
   }[];
   categories?: {
     label: string;
