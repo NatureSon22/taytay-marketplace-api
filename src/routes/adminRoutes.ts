@@ -5,8 +5,8 @@ import {
   archiveAdmin,
   updateAdminStatus,
   updateAdmin,
-} from "../controller/adminController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/adminController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

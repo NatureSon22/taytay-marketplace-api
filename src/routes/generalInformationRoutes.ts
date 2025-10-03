@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   getGeneralInformation,
   upsertGeneralInformation
-} from "../controller/generalInformationController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/generalInformationController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 

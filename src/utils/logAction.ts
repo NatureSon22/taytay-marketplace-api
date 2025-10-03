@@ -1,11 +1,11 @@
 import { Request } from "express";
-import ActLog from "../models/actLog";
-import Admin from "../models/admin";
-import { Account } from "../models/account";
+import ActLog from "../models/actlog.js";
+import Admin from "../models/admin.js";
+import { Account } from "../models/account.js";
 
 export const logAction = async (req: Request, action: string) => {
   try {
-    const account = (req as any).account; // added by your auth middleware
+    const account = (req as any).account;
     let username = "Unknown User";
 
     if (account) {
@@ -24,7 +24,7 @@ export const logAction = async (req: Request, action: string) => {
       }
     }
 
-    await ActLog.create({
+    const log = await ActLog.create({
       username,
       action,
     });

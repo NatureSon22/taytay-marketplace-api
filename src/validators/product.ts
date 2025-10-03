@@ -18,6 +18,8 @@ export const productSchema = z.object({
   storeId: z.string().min(1, { message: "Store ID is required" }),
   categories: z.array(objectIdString).optional(),
   types: z.array(objectIdString).optional(),
+  views: z.number().default(0),
+  likes: z.number().default(0),
   links: z
     .array(
       z.object({

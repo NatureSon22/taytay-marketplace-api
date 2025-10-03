@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Link, { ILink } from "../models/link";
-import LinkArchived from "../models/linkArchived";
-import { logAction } from "../utils/logAction";
+import Link, { ILink } from "../models/link.js";
+import LinkArchived from "../models/linkArchived.js";
+import { logAction } from "../utils/logAction.js";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;

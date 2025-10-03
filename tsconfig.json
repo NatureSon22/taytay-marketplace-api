@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": false,
+        "esModuleInterop": true, // For default imports from CommonJS
+        "types": [
+            "node"
+        ] // Include Node.js types
+    },
+    "include": [
+        "src/**/*"
+    ], // Include all TS files in src
+    "exclude": [
+        "node_modules",
+        "dist"
+    ] // Exclude these folders
+}

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import Category from "../models/category";
-import CategoryArchived from "../models/categoryArchived";
-import { StoreIdParamType } from "../validators/store";
-import { Store } from "../models/store";
-import { logAction } from "../utils/logAction";
+import Category from "../models/category.js";
+import CategoryArchived from "../models/categoryArchived.js";
+import { StoreIdParamType } from "../validators/store.js";
+import { Store } from "../models/store.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

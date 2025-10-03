@@ -1,38 +1,76 @@
-import { StorePaginationType } from "./../validators/store";
 import { Request, Response, NextFunction } from "express";
 import {
   StoreIdParamType,
   StoreType,
   UpdateStoreType,
-} from "../validators/store";
-import { Store } from "../models/store";
-import AppError from "../utils/appError";
-import { Product } from "../models/product";
+} from "../validators/store.js";
+import { Store } from "../models/store.js";
+import AppError from "../utils/appError.js";
+import { Product } from "../models/product.js";
+import { ILink } from "../models/link.js";
+import type { LinkedAccountType } from "./../validators/store.js";
+import { Types } from "mongoose";
 
 const DATA_PER_PAGE = 20;
 
+type LinkedAccounts = {
+  logo?: string;
+  url: string;
+  isDeleted?: boolean;
+  platformName?: string;
+};
+
 export const getStores = async (
-  req: Request,
+  req: Request<
+    unknown,
+    unknown,
+    unknown,
+    {
+      page?: string;
+      limit?: string;
+      storeName?: string;
+      sort?: "newest" | "most-visited";
+    }
+  >,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { limit = 1, page = DATA_PER_PAGE } =
-      req.query as unknown as StorePaginationType;
+    const { limit, page, storeName, sort } = req.query;
 
-    const offset = (page - 1) * limit;
+    const numericLimit = Number(limit) || DATA_PER_PAGE;
+    const numericPage = Number(page) || 1;
+    const offset = (numericPage - 1) * numericLimit;
+
+    const filter: Record<string, any> = {};
+    if (storeName) {
+      filter.storeName = { $regex: storeName, $options: "i" };
+    }
+
+    const sortObj: Record<string, 1 | -1> = {};
+
+    console.log("Sort: " + sort);
+    if (sort) {
+      if (sort === "newest") {
+        sortObj.createdAt = -1;
+      }
+      if (sort === "most-visited") {
+        sortObj.views = -1;
+      }
+    }
 
     const [stores, total] = await Promise.all([
-      Store.find().skip(offset).limit(limit).exec(),
-      Store.countDocuments(),
+      Store.find(filter).sort(sortObj).skip(offset).limit(numericLimit).exec(),
+      Store.countDocuments(filter),
     ]);
 
     res.status(200).json({
       message: "Stores retrieved successfully",
-      data: stores,
+      stores,
       total,
-      page,
-      limit,
+      page: numericPage,
+      limit: numericLimit,
+      totalPages: Math.ceil(total / numericLimit),
     });
   } catch (error) {
     next(error);
@@ -46,32 +84,91 @@ export const getStore = async (
 ) => {
   try {
     const { id } = req.params;
-    const store = await Store.findById(id);
+
+    const store = await Store.findById(id)
+      .populate<{ linkedAccounts: { platform: ILink; url: string }[] }>(
+        "linkedAccounts.platform"
+      )
+      .lean();
 
     if (!store) {
       return next(new AppError("Store not found", 404));
     }
 
-    res
-      .status(201)
-      .json({ message: "Store retrieved successfully", data: store });
+    const noOfProducts = await Product.countDocuments({ storeId: id });
+
+    const linkedAccounts: LinkedAccounts[] =
+      store.linkedAccounts?.map((link) => ({
+        logo: link.platform.link,
+        url: link.url,
+        platformName: link.platform.label,
+      })) ?? [];
+
+    res.status(200).json({
+      message: "Store retrieved successfully",
+      data: { ...store, noOfProducts, linkedAccounts },
+    });
   } catch (error) {
     next(error);
   }
 };
 
 export const getStoreProducts = async (
-  req: Request<StoreIdParamType>,
+  req: Request<
+    StoreIdParamType,
+    unknown,
+    unknown,
+    {
+      page?: string;
+      limit?: string;
+      productCategory?: string;
+      productType?: string;
+    }
+  >,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
-    const products = await Product.find({ storeId: id });
+    const {
+      productCategory,
+      productType,
+      page = "1",
+      limit = "20",
+    } = req.query;
 
-    res
-      .status(201)
-      .json({ message: "Store retrieved successfully", data: products });
+    const filter: Record<string, any> = { storeId: id };
+
+    if (productCategory) {
+      filter.categories = { $in: [productCategory] };
+    }
+
+    if (productType) {
+      filter.types = { $in: [productType] };
+    }
+
+    // Convert pagination params to numbers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    // Query with pagination
+    const products = await Product.find(filter)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
+
+    // Count total for pagination info
+    const total = await Product.countDocuments(filter);
+
+    res.status(200).json({
+      message: "Store products retrieved successfully",
+      data: products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -115,7 +212,7 @@ export const updateStore = async (
     let mergedAccounts = store.linkedAccounts || [];
 
     if (data.linkedAccounts && data.linkedAccounts.length > 0) {
-      data.linkedAccounts.forEach((incoming) => {
+      data.linkedAccounts.forEach((incoming: LinkedAccountType) => {
         const idx = mergedAccounts.findIndex(
           (current) =>
             current.platform.toString() === incoming.platform.toString()
@@ -133,13 +230,21 @@ export const updateStore = async (
         } else {
           // add new if not deleted
           if (!incoming.isDeleted) {
-            mergedAccounts.push(incoming);
+            mergedAccounts.push({
+              ...incoming,
+              platform: new Types.ObjectId(incoming.platform),
+            });
           }
         }
       });
     }
 
-    data.linkedAccounts = mergedAccounts;
+    const formattedmergedAccounts = mergedAccounts.map((account) => ({
+      ...account,
+      platform: account.platform.toString(),
+    }));
+
+    data.linkedAccounts = formattedmergedAccounts;
 
     const updatedStore = await Store.findByIdAndUpdate(id, data, {
       new: true,

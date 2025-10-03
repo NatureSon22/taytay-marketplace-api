@@ -4,13 +4,14 @@ import {
   getProductTypes,
   archiveProductType,
   getAllProductTypesForStore,
-} from "../controller/productTypeController";
-import verifyToken from "../middleware/verifyToken";
+} from "../controller/productTypeController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = Router();
 
-router.get("/", verifyToken, getProductTypes);
-router.get("/:id", verifyToken, getAllProductTypesForStore);
+router.get("/", getProductTypes);
+router.get("/:id", getAllProductTypesForStore);
+
 router.post("/", verifyToken, createProductType);
 router.delete("/:id/archive", verifyToken, archiveProductType);
 

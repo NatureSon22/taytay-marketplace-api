@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import Admin from "../models/admin";
-import AdminArchived from "../models/adminArchived";
-import { hashPassword, verifyPassword } from "../utils/password";
+import Admin from "../models/admin.js";
+import AdminArchived from "../models/adminArchived.js";
+import nodemailer from "nodemailer";
+import { hashPassword, verifyPassword } from "../utils/password.js";
 import crypto from "crypto";
 import brevo from "@getbrevo/brevo";
 

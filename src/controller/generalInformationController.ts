@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import GeneralInformation from "../models/generalInformation";
-import { logAction } from "../utils/logAction";
+import GeneralInformation from "../models/generalInformation.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

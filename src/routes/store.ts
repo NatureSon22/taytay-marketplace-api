@@ -1,10 +1,9 @@
 import {
   validateBody,
   validateParams,
-  validateQuery,
-} from "./../middleware/validate";
+} from "./../middleware/validate.js";
 import { Router } from "express";
-import verifyToken from "../middleware/verifyToken";
+import verifyToken from "../middleware/verifyToken.js";
 import {
   createStore,
   deleteStore,
@@ -12,24 +11,23 @@ import {
   getStoreProducts,
   getStores,
   updateStore,
-} from "../controller/store";
+} from "../controller/store.js";
 import {
   storeIdSchema,
   storePaginationSchema,
   storeSchema,
   updatedStoreSchema,
-} from "../validators/store";
-import upload from "../middleware/upload";
+} from "../validators/store.js";
+import upload from "../middleware/upload.js";
 
 const storeRouter = Router();
 
 storeRouter.get(
   "/",
-  verifyToken,
-  validateQuery(storePaginationSchema),
+  // validateQuery(storePaginationSchema),
   getStores
 );
-storeRouter.get("/:id", verifyToken, validateParams(storeIdSchema), getStore);
+storeRouter.get("/:id", validateParams(storeIdSchema), getStore);
 storeRouter.get(
   "/:id/products",
   validateParams(storeIdSchema),

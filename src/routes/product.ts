@@ -1,29 +1,26 @@
 import { Router } from "express";
-import verifyToken from "../middleware/verifyToken";
+import verifyToken from "../middleware/verifyToken.js";
 import {
   createProduct,
   deleteProduct,
   getProduct,
   getProducts,
+  getProductSuggestions,
   updateProduct,
-} from "../controller/product";
-import { validateBody, validateParams } from "../middleware/validate";
+} from "../controller/product.js";
+import { validateBody, validateParams } from "../middleware/validate.js";
 import {
   productIdSchema,
   productSchema,
   updateProductSchema,
-} from "../validators/product";
-import upload from "../middleware/upload";
+} from "../validators/product.js";
+import upload from "../middleware/upload.js";
 
 const productRouter = Router();
 
 productRouter.get("/", getProducts);
-productRouter.get(
-  "/:id",
-  verifyToken,
-  validateParams(productIdSchema),
-  getProduct
-);
+productRouter.get("/suggestions", getProductSuggestions);
+productRouter.get("/:id", validateParams(productIdSchema), getProduct);
 productRouter.post(
   "/",
   verifyToken,

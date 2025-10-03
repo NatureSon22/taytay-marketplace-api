@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import type { AccountType } from "../validators/account";
+import type { AccountType } from "../validators/account.js";
 
 const accountSchema = new Schema<AccountType>(
   {

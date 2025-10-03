@@ -4,7 +4,7 @@ import {
   getAllLogs,
   getLogById,
   deleteLog,
-} from "../controller/actLogController";
+} from "../controller/actLogController.js";
 
 const router = Router();
 

@@ -1,13 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
-import AppError from "../utils/appError";
-import { Account } from "../models/account";
-import Admin, { IAdmin } from "../models/admin";
-import { hashPassword, verifyPassword } from "../utils/password";
-import { AccountType } from "../validators/account";
-import { StoreType } from "../validators/store";
-import { Store } from "../models/store";
+import AppError from "../utils/appError.js";
+import { Account } from "../models/account.js";
+import Admin, { IAdmin } from "../models/admin.js";
+import { hashPassword, verifyPassword } from "../utils/password.js";
+import { AccountType } from "../validators/account.js";
+import { StoreType } from "../validators/store.js";
+import { Store } from "../models/store.js";
+import { Product } from "../models/product.js";
 
 type JwtPayload = {
   userId: string;
@@ -15,13 +16,15 @@ type JwtPayload = {
 };
 
 interface AuthenticatedRequest extends Request {
-  account: { accountId: any; type: any; };
+  account: { accountId: any; type: any };
   user: JwtPayload;
 }
 
 const loginSchema = z.object({
   email: z.email({ message: "Invalid email" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be 8 characters long" }),
 });
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
@@ -29,17 +32,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     const result = loginSchema.safeParse(req.body);
 
     if (!result.success) {
-      const errorMessages = result.error.issues.map((i) => i.message).join(", ");
+      const errorMessages = result.error.issues
+        .map((i) => i.message)
+        .join(", ");
       return next(new AppError(errorMessages, 422));
     }
 
     const { email, password } = result.data;
 
-    let user: IAdmin | AccountType | null = await Admin.findOne({ email });
+    let user: IAdmin | AccountType | null = await Admin.findOne({
+      email,
+    }).lean();
     let userType: "admin" | "account" = "admin";
 
     if (!user) {
-      user = await Account.findOne({ email });
+      user = await Account.findOne({ email }).lean();
       userType = "account";
     }
 
@@ -93,9 +100,25 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
+    // Response payload
+    let responseData: any;
+
+    if (userType === "admin") {
+      const safeAdmin = { ...user, password: undefined };
+      responseData = safeAdmin;
+    } else {
+      // account → return publicUser + store
+      const publicUser = {
+        ...user,
+        password: "*".repeat(user.password.length),
+      };
+      const store = await Store.find({ owner: user._id });
+      responseData = { publicUser, store };
+    }
+
     res.status(200).json({
       message: "Login Successful",
-      data: user,
+      data: responseData,
       type: userType,
     });
   } catch (error) {
@@ -144,18 +167,18 @@ const register = async (
       return next(new AppError("Failed to create account", 500));
     }
 
-    const authToken = jwt.sign(
-      { accountId: account._id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1d" }
-    );
+    // const authToken = jwt.sign(
+    //   { accountId: account._id },
+    //   process.env.JWT_SECRET as string,
+    //   { expiresIn: "1d" }
+    // );
 
-    res.cookie("authToken", authToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    // res.cookie("authToken", authToken, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "none",
+    //   maxAge: 24 * 60 * 60 * 1000,
+    // });
 
     res.status(200).json({ message: "Account created successfully" });
   } catch (error) {
@@ -163,7 +186,11 @@ const register = async (
   }
 };
 
-const getLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
+const getLoggedInUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { accountId, type } = (req as AuthenticatedRequest).account;
 
@@ -187,8 +214,10 @@ const getLoggedInUser = async (req: Request, res: Response, next: NextFunction) 
       return next(new AppError("Store not found", 404));
     }
 
+    const noOfProducts = await Product.countDocuments({ storeId: store._id });
     const transformed = {
       ...store,
+      noOfProducts,
       linkedAccounts: store?.linkedAccounts?.map((acc: any) => ({
         logo: acc.platform?.link,
         url: acc.url,
@@ -203,13 +232,13 @@ const getLoggedInUser = async (req: Request, res: Response, next: NextFunction) 
       password: "*".repeat(account.password.length),
     };
 
-    res
-      .status(200)
-      .json({ message: "Logged in", data: { user, type, publicUser, store: transformed } });
+    res.status(200).json({
+      message: "Logged in",
+      data: { user, type, publicUser, store: transformed },
+    });
   } catch (error) {
     next(error);
   }
 };
-
 
 export { login, logout, register, getLoggedInUser };

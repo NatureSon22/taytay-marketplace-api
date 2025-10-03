@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import LinkArchived, { ILinkArchived } from "../models/linkArchived";
-import { logAction } from "../utils/logAction";
+import LinkArchived, { ILinkArchived } from "../models/linkArchived.js";
+import { logAction } from "../utils/logAction.js";
 
 interface AuthenticatedRequest extends Request {
   account?: {

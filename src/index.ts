@@ -1,22 +1,22 @@
 import express, { json } from "express";
-import connectDB from "./config/database";
+import connectDB from "./config/database.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import errorHandler from "./utils/errorHandler";
-import adminRoutes from "./routes/adminRoutes";
-import adminArchivedRoutes from "./routes/adminArchivedRoutes";
-import authRouter from "./routes/auth";
-import categoryRoutes from "./routes/categoryRoutes";
-import categoryArchivedRoutes from "./routes/categoryArchivedRoutes";
-import productTypeRoutes from "./routes/productTypeRoutes";
-import productTypeArchivedRoutes from "./routes/productTypeArchivedRoutes";
-import accountRouter from "./routes/account";
-import linkRoutes from "./routes/linkRoutes";
-import linkArchivedRoutes from "./routes/linkArchivedRoutes";
-import generalInformationRoutes from "./routes/generalInformationRoutes";
-import actLogRoutes from "./routes/actLogRoutes";
-import productRouter from "./routes/product";
-import storeRouter from "./routes/store";
+import errorHandler from "./utils/errorHandler.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import adminArchivedRoutes from "./routes/adminArchivedRoutes.js";
+import authRouter from "./routes/auth.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import categoryArchivedRoutes from "./routes/categoryArchivedRoutes.js";
+import productTypeRoutes from "./routes/productTypeRoutes.js";
+import productTypeArchivedRoutes from "./routes/productTypeArchivedRoutes.js";
+import accountRouter from "./routes/account.js";
+import linkRoutes from "./routes/linkRoutes.js";
+import linkArchivedRoutes from "./routes/linkArchivedRoutes.js";
+import generalInformationRoutes from "./routes/generalInformationRoutes.js";
+import actLogRoutes from "./routes/actLogRoutes.js";
+import productRouter from "./routes/product.js";
+import storeRouter from "./routes/store.js";
 
 const app = express();
 
@@ -24,7 +24,12 @@ app.use(json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://taytay-marketplace.netlify.app",
+      "*"
+    ],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -34,7 +39,7 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/accounts", accountRouter);
 app.use("/api/products", productRouter);
-app.use("/api/store", storeRouter);
+app.use("/api/stores", storeRouter);
 
 app.use("/api/admins", adminRoutes);
 app.use("/api/archive-admins", adminArchivedRoutes);

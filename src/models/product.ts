@@ -1,9 +1,9 @@
 import { model, Schema } from "mongoose";
-import { ProductType } from "../validators/product";
+import { ProductType } from "../validators/product.js";
 
 const productSchema = new Schema<ProductType>(
   {
-    productName: { type: String, required: true },
+    productName: { type: String, required: true, index: true },
     productPrice: { type: String, required: true },
     productDescription: { type: String, required: true },
     productPictures: [{ type: String, required: true }],
@@ -14,6 +14,8 @@ const productSchema = new Schema<ProductType>(
     types: [
       { type: Schema.Types.ObjectId, ref: "ProductType", required: true },
     ],
+    views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
     links: [
       {
         platform: {

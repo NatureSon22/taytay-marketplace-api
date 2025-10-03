@@ -1,21 +1,24 @@
 import { Request, Response, NextFunction } from "express";
-import AppError from "../utils/appError";
-import { Account } from "../models/account";
+import AppError from "../utils/appError.js";
+import { Account } from "../models/account.js";
 import {
   AccountIdParamType,
   AccountType,
   UpdateAccountType,
-} from "../validators/account";
-import { hashPassword } from "../utils/password";
+} from "../validators/account.js";
+import { hashPassword } from "../utils/password.js";
+import { Store } from "../models/store.js";
 
-import { Store } from "../models/store";
-
-export const getUserGrowth = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserGrowth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const growth = await Account.aggregate([
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, 
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
           users: { $sum: 1 },
         },
       },
@@ -23,7 +26,7 @@ export const getUserGrowth = async (req: Request, res: Response, next: NextFunct
     ]);
 
     const formatted = growth.map((g) => ({
-      month: g._id, 
+      month: g._id,
       users: g.users,
     }));
 
@@ -43,7 +46,9 @@ export const getAccounts = async (
 
     const accountsWithStore = await Promise.all(
       accounts.map(async (acc) => {
-        const store = await Store.findOne({ owner: acc._id }).select("storeName");
+        const store = await Store.findOne({ owner: acc._id }).select(
+          "storeName"
+        );
         return {
           ...acc,
           storeName: store ? store.storeName : null,
@@ -51,8 +56,12 @@ export const getAccounts = async (
       })
     );
 
-    const totalVerified = accounts.filter(acc => acc.status === "Verified").length;
-    const totalPending = accounts.filter(acc => acc.status === "Pending").length;
+    const totalVerified = accounts.filter(
+      (acc) => acc.status === "Verified"
+    ).length;
+    const totalPending = accounts.filter(
+      (acc) => acc.status === "Pending"
+    ).length;
 
     res.status(200).json({
       message: "Accounts retrieved successfully",
@@ -67,8 +76,6 @@ export const getAccounts = async (
     next(error);
   }
 };
-
-
 
 export const getAccount = async (
   req: Request<AccountIdParamType>,
@@ -181,7 +188,11 @@ export const deleteAccount = async (
 };
 
 export const updateSellerStatus = async (
-  req: Request<{ id: string }, unknown, { status: "Pending" | "Verified" | "Blocked" }>,
+  req: Request<
+    { id: string },
+    unknown,
+    { status: "Pending" | "Verified" | "Blocked" }
+  >,
   res: Response,
   next: NextFunction
 ) => {
