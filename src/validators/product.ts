@@ -7,15 +7,13 @@ const objectIdString = z
   .transform((val) => new Types.ObjectId(val));
 
 export const productSchema = z.object({
-  productName: z.string().min(1, { message: "Product name is required" }),
-  productPrice: z.string().min(1, { message: "Product price is required" }),
-  productDescription: z
-    .string()
-    .min(1, { message: "Product description is required" }),
+  productName: z.string().nonempty("Product name is required"),
+  productPrice: z.string().nonempty("Product price is required"),
+  productDescription: z.string().nonempty("Product description is required"),
   productPictures: z
     .array(z.string())
     .min(1, { message: "At least one picture is required" }),
-  storeId: z.string().min(1, { message: "Store ID is required" }),
+  storeId: z.string().nonempty("Store ID is required"),
   categories: z.array(objectIdString).optional(),
   types: z.array(objectIdString).optional(),
   views: z.number().default(0),
@@ -24,7 +22,8 @@ export const productSchema = z.object({
     .array(
       z.object({
         platform: objectIdString,
-        url: z.url("Invalid url"),
+        url: z.string().url("Invalid url"),
+        isDeleted: z.coerce.boolean().default(false),
       })
     )
     .optional(),

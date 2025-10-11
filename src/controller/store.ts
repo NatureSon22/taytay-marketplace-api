@@ -49,7 +49,6 @@ export const getStores = async (
 
     const sortObj: Record<string, 1 | -1> = {};
 
-    console.log("Sort: " + sort);
     if (sort) {
       if (sort === "newest") {
         sortObj.createdAt = -1;

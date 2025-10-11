@@ -55,22 +55,18 @@ export const getProducts = async (
         if (field === "price") {
           sortObj.productPrice = order === "low-high" ? 1 : -1;
         }
-
         if (field === "popularity" && order === "most-liked") {
           sortObj.likes = -1;
         }
-
         if (field === "popularity" && order === "most-viewed") {
           sortObj.views = -1;
         }
-
         if (field === "alphabetical") {
           sortObj.productName = order === "a-z" ? 1 : -1;
           sortAlphabetical = true;
         }
-
         if (field === "arrival") {
-          sortObj.createdAt = order === "recent" ? 1 : -1;
+          sortObj.createdAt = order === "recent" ? -1 : 1;
         }
       });
     }
@@ -81,14 +77,35 @@ export const getProducts = async (
     const query = Product.find(filter)
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum)
-      .sort(sortObj);
+      .sort(sortObj)
+      .populate("links.platform")
+      .lean();
 
     if (sortAlphabetical) {
       query.collation({ locale: "en", strength: 2 });
     }
 
-    const products = await query;
-    const total = await Product.countDocuments(filter);
+    const [productsQuery, total] = await Promise.all([
+      query,
+      Product.countDocuments(filter),
+    ]);
+
+    const products = productsQuery.map((product) => {
+      const links = (product?.links || []).map((link: any) => {
+        const platform = link.platform;
+        return {
+          _id: platform?._id,
+          url: link.url,
+          image: platform?.link,
+          name: platform?.name,
+        };
+      });
+
+      return {
+        ...product,
+        links,
+      };
+    });
 
     res.status(200).json({
       message: "Products retrieved successfully",
@@ -181,7 +198,7 @@ export const getProductSuggestions = async (
     const products = await Product.find({
       productName: { $regex: `^${escapeRegex(productName)}` },
     })
-      .collation({ locale: "en", strength: 2 }) // ensures case-insensitive search
+      .collation({ locale: "en", strength: 2 })
       .limit(10);
 
     const formatItems = products.map((product) => ({

@@ -105,6 +105,10 @@ export const validateBody =
       const result = schema.safeParse(data);
 
       if (!result.success) {
+        const test = result.error.issues.map((issue) => issue.message);
+
+        console.log("ERROR: " + test);
+
         const message = result.error.issues
           .map((err) => `${err.path.join(".")}: ${err.message}`)
           .join(", ");
