@@ -172,6 +172,64 @@ export const getProduct = async (
   }
 };
 
+export const getProductDetails = async (
+  req: Request<ProductIdParamType>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id)
+      .populate<{
+        links: { platform: ILink; url: string }[];
+        categories: { _id: string }[];
+        types: { _id: string }[];
+      }>([
+        { path: "links.platform" },
+        { path: "categories" },
+        { path: "types" },
+      ])
+      .lean();
+
+    if (!product) {
+      return next(new AppError("Product not found", 404));
+    }
+
+    const categories = product.categories.map((category) => category._id) ?? [];
+
+    const types = product.types.map((type) => type._id) ?? [];
+
+    //     const link = z.object({
+    //   _id: z.string().optional(),
+    //   platform: z.string(),
+    //   url: z.url("Invalid url"),
+    //   isDeleted: z.boolean().catch(false),
+    //   platformName: z.string(),
+    // });
+    const links =
+      product.links?.map((link) => ({
+        _id: link.platform._id,
+        platform: link.platform._id,
+        logo: link.platform.link,
+        platformName: link.platform.label,
+        url: link.url,
+      })) ?? [];
+
+    res.status(200).json({
+      message: "Product retrieved successfully",
+      data: {
+        ...product,
+        categories,
+        types,
+        links,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 function escapeRegex(text: string) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
@@ -196,10 +254,10 @@ export const getProductSuggestions = async (
     }
 
     const products = await Product.find({
-      productName: { $regex: `^${escapeRegex(productName)}` },
+      productName: { $regex: `^${escapeRegex(productName)}`, $options: "i" },
     })
-      .collation({ locale: "en", strength: 2 })
-      .limit(10);
+      .limit(10)
+      .lean();
 
     const formatItems = products.map((product) => ({
       label: product.productName,
@@ -238,7 +296,7 @@ export const createProduct = async (
 };
 
 export const updateProduct = async (
-  req: Request<ProductIdParamType, unknown, UpdateProductType>,
+  req: Request<ProductIdParamType, unknown, ProductType>,
   res: Response,
   next: NextFunction
 ) => {
@@ -246,17 +304,23 @@ export const updateProduct = async (
     const { id } = req.params;
     const data = req.body;
 
-    const updatedProduct = await Product.findOneAndUpdate({ _id: id }, data, {
-      new: true,
+    console.log(id);
+    console.log(data);
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        ...data,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) return next(new AppError("Product not found", 404));
+
+    res.status(200).json({
+      message: "Product updated successfully",
+      data: updatedProduct,
     });
-
-    if (!updatedProduct) {
-      return next(new AppError("Product not found", 404));
-    }
-
-    res
-      .status(200)
-      .json({ message: "Product updated successfully", data: updatedProduct });
   } catch (error) {
     next(error);
   }
@@ -268,23 +332,18 @@ export const deleteProduct = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const { id } = req.body;
 
-    const updatedProduct = await Product.findOneAndUpdate(
-      { _id: id },
-      { isDeleted: true },
-      {
-        new: true,
-      }
-    );
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
-    if (!updatedProduct) {
+    if (!deletedProduct) {
       return next(new AppError("Product not found", 404));
     }
 
-    res
-      .status(200)
-      .json({ message: "Product deleted successfully", data: updatedProduct });
+    res.status(200).json({
+      message: "Product deleted successfully",
+      data: deletedProduct,
+    });
   } catch (error) {
     next(error);
   }

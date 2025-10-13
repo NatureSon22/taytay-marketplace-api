@@ -4,6 +4,7 @@ import {
   createProduct,
   deleteProduct,
   getProduct,
+  getProductDetails,
   getProducts,
   getProductSuggestions,
   updateProduct,
@@ -21,6 +22,11 @@ const productRouter = Router();
 productRouter.get("/", getProducts);
 productRouter.get("/suggestions", getProductSuggestions);
 productRouter.get("/:id", validateParams(productIdSchema), getProduct);
+productRouter.get(
+  "/:id/details",
+  validateParams(productIdSchema),
+  getProductDetails
+);
 productRouter.post(
   "/",
   verifyToken,
@@ -31,13 +37,14 @@ productRouter.post(
 productRouter.put(
   "/:id",
   verifyToken,
-  validateBody(updateProductSchema),
+  upload.array("images[]", 4),
+  validateBody(updateProductSchema, true, "productPictures"),
   updateProduct
 );
 productRouter.delete(
   "/",
   verifyToken,
-  validateParams(productIdSchema),
+  validateBody(productIdSchema),
   deleteProduct
 );
 

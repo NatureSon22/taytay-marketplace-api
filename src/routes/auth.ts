@@ -22,6 +22,6 @@ authRouter.post(
   validateAndMerge(accountSchema),
   register
 );
-authRouter.get("/user", getLoggedInUser);
+authRouter.get("/user", verifyToken, getLoggedInUser);
 
 export default authRouter;
