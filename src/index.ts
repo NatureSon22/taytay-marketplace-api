@@ -8,6 +8,8 @@ import adminArchivedRoutes from "./routes/adminArchivedRoutes.js";
 import authRouter from "./routes/auth.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import categoryArchivedRoutes from "./routes/categoryArchivedRoutes.js";
+import organizationRoutes from "./routes/organizationRoutes.js";
+import organizationArchivedRoutes from "./routes/organization.js";
 import productTypeRoutes from "./routes/productTypeRoutes.js";
 import productTypeArchivedRoutes from "./routes/productTypeArchivedRoutes.js";
 import accountRouter from "./routes/account.js";
@@ -51,6 +53,8 @@ app.use("/api/links", linkRoutes);
 app.use("/api/archived-links", linkArchivedRoutes);
 app.use("/api/general-information", generalInformationRoutes);
 app.use("/api/logs", actLogRoutes);
+app.use("/api/organizations", organizationRoutes);
+app.use("/api/archived-organizations", organizationArchivedRoutes);
 
 app.use(errorHandler);
 
