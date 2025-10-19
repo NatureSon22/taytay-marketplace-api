@@ -131,8 +131,53 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         ...user,
         password: "*".repeat(user.password.length),
       };
-      const store = await Store.find({ owner: user._id });
-      responseData = { publicUser, store };
+
+      const store = await Store.findOne({ owner: user._id })
+        .populate<{
+          linkedAccounts: {
+            platform: ILink | null;
+            url: string;
+            isDeleted?: boolean;
+          }[];
+          organization: { _id: string; organizationName: string } | null;
+        }>("linkedAccounts.platform organization")
+        .lean();
+
+      if (!store) {
+        return next(new AppError("Store not found", 404));
+      }
+
+      const noOfProducts = await Product.countDocuments({ storeId: store._id });
+
+      let organization:
+        | { organization: string; organizationName: string }
+        | undefined;
+
+      if (store.organization) {
+        organization = {
+          organization: store.organization._id,
+          organizationName: store.organization.organizationName,
+        };
+      }
+
+      const linkedAccounts =
+        store.linkedAccounts?.map((acc) => ({
+          logo: acc.platform?.link ?? "",
+          url: acc.url,
+          platform: acc.platform?._id?.toString() ?? "",
+          platformName: acc.platform?.label ?? "",
+          isDeleted: acc.isDeleted ?? false,
+        })) ?? [];
+
+      responseData = {
+        publicUser,
+        store: {
+          ...store,
+          linkedAccounts,
+          noOfProducts,
+          ...organization,
+        },
+      };
     }
 
     res.status(200).json({

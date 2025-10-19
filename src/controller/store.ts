@@ -261,22 +261,50 @@ export const updateStore = async (
     const updatedStore = await Store.findByIdAndUpdate(id, data, {
       new: true,
     })
-      .populate("linkedAccounts.platform")
+      .populate<{
+        linkedAccounts: {
+          platform: ILink | null;
+          url: string;
+          isDeleted?: boolean;
+        }[];
+        organization: { _id: string; organizationName: string } | null;
+      }>("linkedAccounts.platform organization")
       .lean();
 
-    const transformedLinkedAccounts = updatedStore?.linkedAccounts?.map(
-      (acc: any) => ({
-        logo: acc.platform?.link,
+    const noOfProducts = await Product.countDocuments({ storeId: store._id });
+
+    if (!updatedStore) {
+      return next(new AppError("Store not found", 404));
+    }
+
+    let organization:
+      | { organization: string; organizationName: string }
+      | undefined;
+
+    if (store.organization) {
+      organization = {
+        organization: updatedStore.organization._id,
+        organizationName: updatedStore.organization.organizationName,
+      };
+    }
+
+    const transformedLinkedAccounts =
+      updatedStore.linkedAccounts?.map((acc) => ({
+        logo: acc.platform?.link ?? "",
         url: acc.url,
-        platform: acc.platform?._id.toString(),
-        platformName: acc.platform?.label,
+        platform: acc.platform?._id?.toString() ?? "",
+        platformName: acc.platform?.label ?? "",
         isDeleted: acc.isDeleted ?? false,
-      })
-    );
+      })) ?? [];
 
     res.status(200).json({
       message: "Store updated successfully",
-      data: { ...updatedStore, linkedAccounts: transformedLinkedAccounts },
+      data: {
+        ...updatedStore,
+        noOfProducts,
+        linkedAccounts: transformedLinkedAccounts,
+        ...organization,
+      },
     });
   } catch (error) {
     next(error);
