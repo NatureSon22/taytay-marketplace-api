@@ -10,10 +10,11 @@ interface StoreType {
   owner: Types.ObjectId; // Reference to Account
   permit?: string;
   views?: number;
+  organization?: Types.ObjectId;
   linkedAccounts?: {
     isDeleted?: boolean;
     platform: Types.ObjectId; // Reference to Link
-    url: string;  
+    url: string;
   }[];
   categories?: {
     label: string;
@@ -43,6 +44,7 @@ const storeSchema = new Schema<StoreType>(
       },
     ],
     views: { type: Number, default: 0 },
+    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
     categories: [
       {
         label: { type: String, required: true },

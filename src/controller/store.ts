@@ -10,6 +10,7 @@ import { Product } from "../models/product.js";
 import { ILink } from "../models/link.js";
 import type { LinkedAccountType } from "./../validators/store.js";
 import { Types } from "mongoose";
+import organization from "../models/organization.js";
 
 const DATA_PER_PAGE = 20;
 
@@ -85,9 +86,10 @@ export const getStore = async (
     const { id } = req.params;
 
     const store = await Store.findById(id)
-      .populate<{ linkedAccounts: { platform: ILink; url: string }[] }>(
-        "linkedAccounts.platform"
-      )
+      .populate<{
+        linkedAccounts: { platform: ILink; url: string }[];
+        organization: { _id: string; organizationName: string };
+      }>("linkedAccounts.platform organization")
       .lean();
 
     if (!store) {
@@ -95,6 +97,17 @@ export const getStore = async (
     }
 
     const noOfProducts = await Product.countDocuments({ storeId: id });
+
+    let organization:
+      | { organization: string; organizationName: string }
+      | undefined;
+
+    if (store.organization) {
+      organization = {
+        organization: store.organization._id,
+        organizationName: store.organization.organizationName,
+      };
+    }
 
     const linkedAccounts: LinkedAccounts[] =
       store.linkedAccounts?.map((link) => ({
@@ -105,7 +118,7 @@ export const getStore = async (
 
     res.status(200).json({
       message: "Store retrieved successfully",
-      data: { ...store, noOfProducts, linkedAccounts },
+      data: { ...store, noOfProducts, linkedAccounts, ...organization },
     });
   } catch (error) {
     next(error);
